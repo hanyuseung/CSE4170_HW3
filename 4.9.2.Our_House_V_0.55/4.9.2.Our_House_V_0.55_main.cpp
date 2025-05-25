@@ -6,6 +6,7 @@
 #include <GL/freeglut.h>
 #include "Shaders/LoadShaders.h"
 #include "Scene_Definitions.h"
+#include "Camera.h"
 
 Scene scene;
 
@@ -17,7 +18,6 @@ void display(void) {
 			camera->get().view_port.w, camera->get().view_port.h);
 		scene.ViewMatrix = camera->get().ViewMatrix;
 		scene.ProjectionMatrix = camera->get().ProjectionMatrix;
-
 		scene.draw_world();
 	}
 	glutSwapBuffers();
@@ -78,6 +78,16 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'x':
 		// Change vm to x axis
+		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+			if (camera->get().camera_id == CAMERA_SIDE) {
+				camera->get().flag_valid = true;
+			}
+			else {
+				camera->get().flag_valid = false; // invalidate other cameras
+			}
+		}
+		printf("^^^ Camera changed to side view.\n");
+		glutPostRedisplay();
 		break;
 	case 'y':
 		// Change vm to y axis

@@ -57,4 +57,5 @@ struct Orthographic_Camera : public Camera {
 
 struct Camera_Data {
 	Perspective_Camera cam_main { CAMERA_MAIN };
+	Perspective_Camera cam_side{ CAMERA_SIDE };
 };

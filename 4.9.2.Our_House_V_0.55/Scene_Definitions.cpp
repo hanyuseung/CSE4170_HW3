@@ -105,6 +105,10 @@ void Scene::create_camera_list(int win_width, int win_height, float win_aspect_r
 	camera_ID_mapper[CAMERA_MAIN] = camera_list.size();
 	camera_list.push_back(camera_data.cam_main);
 
+	// side camera
+	camera_data.cam_side.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_SIDE] = camera_list.size();
+	camera_list.push_back(camera_data.cam_side);
 	// define others here
 }
 
