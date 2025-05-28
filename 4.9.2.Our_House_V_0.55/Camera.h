@@ -7,8 +7,8 @@ enum Camera_Projection_TYPE {
 };
 
 enum Camera_ID { // x:1, y:2, z:3
-	CAMERA_MAIN = 0, CAMERA_SIDE_FRONT = 1, CAMERA_TOP = 2, 
-	CAMERA_SIDE = 3, CAMERA_CC_0, CAMERA_CC_1
+	CAMERA_MAIN = 0, CAMERA_SIDE_FRONT = 2, CAMERA_TOP = 3, 
+	CAMERA_SIDE = 1, CAMERA_CC_0 = 4, CAMERA_CC_1 = 5
 };
 
 struct Camera_View {
@@ -55,6 +55,10 @@ struct Orthographic_Camera : public Camera {
 	void define_camera(int win_width, int win_height, float win_aspect_ratio);
 };
 
+// 카메라를 위해 추가해야 하는 부분
 struct Camera_Data {
 	Perspective_Camera cam_main { CAMERA_MAIN };
+	Perspective_Camera cam_side{ CAMERA_SIDE };
+	Perspective_Camera cam_side_front{ CAMERA_SIDE_FRONT };
+	Perspective_Camera cam_top{ CAMERA_TOP };
 };

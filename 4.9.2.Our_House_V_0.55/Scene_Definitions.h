@@ -60,7 +60,7 @@ struct Shader_Data {
 };
 
 struct Material {
-	glm::vec4 emission, ambient, diffuse, specular;
+	glm::vec4 emission, ambient, diffuse, specular; // difuse: 물체의 기반 색깔
 	GLfloat exponent;
 };
 

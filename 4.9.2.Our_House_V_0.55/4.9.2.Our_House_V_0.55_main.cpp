@@ -81,11 +81,45 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'y':
 		// Change vm to y axis
+		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+			if (camera->get().camera_id == CAMERA_SIDE_FRONT) {
+				camera->get().flag_valid = true;
+			}
+			else {
+				camera->get().flag_valid = false; // invalidate other cameras
+			}
+		}
+		printf("^^^ Camera changed to side front view.\n");
+		glutPostRedisplay();
 		break;
 	case 'z':
 		// Change vm to z axis
+		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+			if (camera->get().camera_id == CAMERA_TOP) {
+				camera->get().flag_valid = true;
+			}
+			else {
+				camera->get().flag_valid = false; // invalidate other cameras
+			}
+		}
+		printf("^^^ Camera changed to Top view.\n");
+		glutPostRedisplay();
+		break;
+	case ' ':
+		// Change vm to main axis
+		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+			if (camera->get().camera_id == CAMERA_MAIN) {
+				camera->get().flag_valid = true;
+			}
+			else {
+				camera->get().flag_valid = false; // invalidate other cameras
+			}
+		}
+		printf("^^^ Camera changed to main view.\n");
+		glutPostRedisplay();
 		break;
 	}
+	
 }
 
 void reshape(int width, int height) {
