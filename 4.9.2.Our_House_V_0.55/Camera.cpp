@@ -47,15 +47,19 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		T = glm::mat4(R33_t) * ViewMatrix;
 		cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
 
-		cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
-		cam_proj.params.pers.fovy = 15.0f * TO_RADIAN;
-		cam_proj.params.pers.aspect = win_aspect_ratio;
-		cam_proj.params.pers.n = 1.0f;
-		cam_proj.params.pers.f = 50000.0f;
-
-		ProjectionMatrix = glm::perspective(cam_proj.params.pers.fovy, cam_proj.params.pers.aspect,
-			cam_proj.params.pers.n, cam_proj.params.pers.f);
-		view_port.x = 200; view_port.y = 200; view_port.w = win_width - 200; view_port.h = win_height - 200;
+		cam_proj.projection_type = CAMERA_PROJECTION_ORTHOGRAPHIC;
+		cam_proj.params.ortho.bottom = -150.0f;
+		cam_proj.params.ortho.top = 150.0f;
+		cam_proj.params.ortho.left = -200.0f;
+		cam_proj.params.ortho.right = 200.0f;
+		cam_proj.params.ortho.f = 50000.0f;
+		cam_proj.params.ortho.n = 1.0f;
+		
+		/*ProjectionMatrix = glm::perspective(cam_proj.params.pers.fovy, cam_proj.params.pers.aspect,
+			cam_proj.params.pers.n, cam_proj.params.pers.f);*/
+		ProjectionMatrix = glm::ortho(cam_proj.params.ortho.left, cam_proj.params.ortho.right, cam_proj.params.ortho.bottom,
+			cam_proj.params.ortho.top, cam_proj.params.ortho.n, cam_proj.params.ortho.f);
+		view_port.x = -(win_width/2) + 200; view_port.y =win_height/2 - 100; view_port.w = win_width - 200; view_port.h = win_height - 200;
 		break;
 	case CAMERA_SIDE_FRONT:
 		flag_valid = false;

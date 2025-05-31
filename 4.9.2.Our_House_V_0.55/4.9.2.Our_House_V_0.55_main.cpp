@@ -7,12 +7,45 @@
 #include "Shaders/LoadShaders.h"
 #include "Scene_Definitions.h"
 
+using namespace glm;
+
 Scene scene;
+
+bool Camera_rotate_flag = false;
+const int FPS = 60;
+const float DT = 1.0f/FPS;
+
+typedef struct Flag {
+	int Camera_xyz = { 0 };
+	bool Camera_rotate = { false };
+	bool Camera_gofront = { false };
+	bool Camera_goback = { false };
+}Flag;
+
+typedef struct Mouse {
+	vec2 point;
+	float zoomfactor = { 1.0f };
+}Mouse;
+
+Mouse mouse;
+
+Flag flag;
+
+void update();
+void updateCamRotate(float dt);
+void zoomInOut(float z);
+void mouseWheel(int wheel, int direction, int x, int y);
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
+		if (Camera_rotate_flag) {
+			camera->get().ViewMatrix = rotate(camera->get().ViewMatrix,  100*DT * TO_RADIAN , vec3(0.0f, 0.0f, 1.0f));
+		}
+		if (flag.Camera_xyz == CAMERA_SIDE) {
+			
+		}
 		glViewport(camera->get().view_port.x, camera->get().view_port.y,
 			camera->get().view_port.w, camera->get().view_port.h);
 		scene.ViewMatrix = camera->get().ViewMatrix;
@@ -20,10 +53,12 @@ void display(void) {
 
 		scene.draw_world();
 	}
+	
+
 	glutSwapBuffers();
 }
 
-void keyboard(unsigned char key, int x, int y) {
+void keyboardDown(unsigned char key, int x, int y) {
 	static int flag_cull_face = 0, polygon_fill_on = 0, depth_test_on = 0;
 
 	switch (key) {
@@ -78,9 +113,21 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'x':
 		// Change vm to x axis
+		flag.Camera_xyz = CAMERA_SIDE;
+		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+			if (camera->get().camera_id == CAMERA_SIDE) {
+				camera->get().flag_valid = true;
+			}
+			else {
+				camera->get().flag_valid = false; // invalidate other cameras
+			}
+		}
+		printf("^^^ Camera changed to side front view.\n");
+		glutPostRedisplay();
 		break;
 	case 'y':
 		// Change vm to y axis
+		flag.Camera_xyz = CAMERA_SIDE_FRONT;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_SIDE_FRONT) {
 				camera->get().flag_valid = true;
@@ -94,6 +141,7 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'z':
 		// Change vm to z axis
+		flag.Camera_xyz = CAMERA_TOP;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_TOP) {
 				camera->get().flag_valid = true;
@@ -107,6 +155,7 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case ' ':
 		// Change vm to main axis
+		flag.Camera_xyz = CAMERA_MAIN;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_MAIN) {
 				camera->get().flag_valid = true;
@@ -118,7 +167,80 @@ void keyboard(unsigned char key, int x, int y) {
 		printf("^^^ Camera changed to main view.\n");
 		glutPostRedisplay();
 		break;
+	case 'r':
+		if (Camera_rotate_flag) {
+			Camera_rotate_flag = false;
+		}
+		else {
+			Camera_rotate_flag = true;
+		}
+		break;
+	case 'w':
+		break;
+	case 's':
+		break;
 	}
+
+}
+
+void keyboardUp(unsigned char key, int x, int y) {
+	switch (key) {
+	case 'w':
+		break;
+	case 's':
+		break;
+	}
+		
+}
+
+void mouseWheel(int wheel, int direction, int x, int y) {
+	float zoomf = 1.0f;
+	if (direction < 0) {
+		// 휠을 위로 굴렸을 때 (줌 인)
+		//mouse.zoomfactor = 1.1f;
+		printf("zoomin\n");
+		zoomf = 1.1f;
+	}
+	else {
+		// 휠을 아래로 굴렸을 때 (줌 아웃)
+		//mouse.zoomfactor = 1.0f/1.1f;
+		zoomf = 0.9f;
+	}
+	// 필요하다면 뷰투영 행렬을 갱신하거나, 카메라 속성 업데이트
+	// 예: UpdateProjectionMatrix(g_zoom);
+	// 화면을 다시 그리도록 요청
+	zoomInOut(zoomf);
+	glutPostRedisplay();
+	mouse.zoomfactor = 1.0f;
+}
+
+void zoomInOut(float zoomf){
+	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+		if (camera->get().flag_valid) {
+			if ((camera->get().cam_proj.params.pers.fovy) / TO_RADIAN > 120.0f) {
+				camera->get().cam_proj.params.pers.fovy = 119.0f*TO_RADIAN;
+				return;
+			}
+			else if((camera->get().cam_proj.params.pers.fovy) / TO_RADIAN < 10.0f) {
+				camera->get().cam_proj.params.pers.fovy = 11.0f*TO_RADIAN;
+				return;
+			}
+			(camera->get().cam_proj.params.pers.fovy) *= zoomf;
+			camera->get().ProjectionMatrix = perspective(camera->get().cam_proj.params.pers.fovy, camera->get().cam_proj.params.pers.aspect,
+				camera->get().cam_proj.params.pers.n, camera->get().cam_proj.params.pers.f);
+		}
+	}
+}
+
+
+
+void update()
+{
+
+}
+
+void updateCamRotate(float dt) 
+{
 	
 }
 
@@ -133,14 +255,16 @@ void reshape(int width, int height) {
 void timer_scene(int index) {
 	scene.clock(0);
 	glutPostRedisplay();
-	glutTimerFunc(100, timer_scene, 0);
+	glutTimerFunc(1000/FPS, timer_scene, 0);
 }
 
 void register_callbacks(void) {
 	glutDisplayFunc(display);
-	glutKeyboardFunc(keyboard);
+	glutKeyboardFunc(keyboardDown);
+	glutKeyboardUpFunc(keyboardUp);
 	glutReshapeFunc(reshape);
  	glutTimerFunc(100, timer_scene, 0);
+	glutMouseWheelFunc(mouseWheel);
 //	glutCloseFunc(cleanup_OpenGL_stuffs or else); // Do it yourself!!!
 }
 
