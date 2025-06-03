@@ -119,7 +119,39 @@ void Scene::create_camera_list(int win_width, int win_height, float win_aspect_r
 	camera_data.cam_top.define_camera(win_width, win_height, win_aspect_ratio);
 	camera_ID_mapper[CAMERA_TOP] = camera_list.size();
 	camera_list.push_back(camera_data.cam_top);
+
+	// CC0
+	camera_data.cam_cc0.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_CC_0] = camera_list.size();
+	camera_list.push_back(camera_data.cam_cc0);
+
+	// CC1
+	camera_data.cam_cc1.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_CC_1] = camera_list.size();
+	camera_list.push_back(camera_data.cam_cc1);
+
+	// CC2
+	camera_data.cam_cc2.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_CC_2] = camera_list.size();
+	camera_list.push_back(camera_data.cam_cc2);
 	// define others here
+
+
+	// ORTHO
+	// Ortho X
+	camera_data.cam_ortho_x.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_ORTHO_X] = camera_list.size();
+	camera_list.push_back(camera_data.cam_ortho_x);
+
+	// Ortho Y
+	camera_data.cam_ortho_y.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_ORTHO_Z] = camera_list.size();
+	camera_list.push_back(camera_data.cam_ortho_y);
+
+	// Ortho Z
+	camera_data.cam_ortho_z.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_ORTHO_Z] = camera_list.size();
+	camera_list.push_back(camera_data.cam_ortho_z);
 }
 
 void Scene::build_shader_list() {

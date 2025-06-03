@@ -11,7 +11,10 @@ using namespace glm;
 
 Scene scene;
 
-bool Camera_rotate_flag = false;
+#define CAMERA_X 0;
+#define CAMERA_Y 1;
+#define CAMERA_Z 2;
+
 const int FPS = 60;
 const float DT = 1.0f/FPS;
 
@@ -20,6 +23,9 @@ typedef struct Flag {
 	bool Camera_rotate = { false };
 	bool Camera_gofront = { false };
 	bool Camera_goback = { false };
+	bool Camera_move = { false };
+	bool Camera_clear = { false };
+	bool Camera_Ortho = { false };
 }Flag;
 
 typedef struct Mouse {
@@ -40,12 +46,31 @@ void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
-		if (Camera_rotate_flag) {
-			camera->get().ViewMatrix = rotate(camera->get().ViewMatrix,  100*DT * TO_RADIAN , vec3(0.0f, 0.0f, 1.0f));
+		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { //clear main camera
+			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
+			flag.Camera_clear = false;
 		}
-		if (flag.Camera_xyz == CAMERA_SIDE) {
+		if (flag.Camera_rotate && camera->get().flag_move) {
+			switch (flag.Camera_xyz) {
+			case 0: 
+				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(1.0f, 0.0f, 0.0f));
+				break;
+			case 1:
+				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(0.0f, 1.0f, 0.0f));
+				break;
+			case 2:
+				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(0.0f, 0.0f, 1.0f));
+				break;
+			}
+		}
+
+		if (flag.Camera_Ortho) {
 			
 		}
+		else {
+
+		}
+
 		glViewport(camera->get().view_port.x, camera->get().view_port.y,
 			camera->get().view_port.w, camera->get().view_port.h);
 		scene.ViewMatrix = camera->get().ViewMatrix;
@@ -113,6 +138,11 @@ void keyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'x':
 		// Change vm to x axis
+		if (flag.Camera_rotate) {
+			flag.Camera_xyz = CAMERA_X;
+			break;
+		}
+
 		flag.Camera_xyz = CAMERA_SIDE;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_SIDE) {
@@ -127,6 +157,12 @@ void keyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'y':
 		// Change vm to y axis
+
+		if (flag.Camera_rotate) {
+			flag.Camera_xyz = CAMERA_Y;
+			break;
+		}
+
 		flag.Camera_xyz = CAMERA_SIDE_FRONT;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_SIDE_FRONT) {
@@ -141,6 +177,11 @@ void keyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'z':
 		// Change vm to z axis
+		if (flag.Camera_rotate) {
+			flag.Camera_xyz = CAMERA_Z;
+			break;
+		}
+
 		flag.Camera_xyz = CAMERA_TOP;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 			if (camera->get().camera_id == CAMERA_TOP) {
@@ -156,30 +197,67 @@ void keyboardDown(unsigned char key, int x, int y) {
 	case ' ':
 		// Change vm to main axis
 		flag.Camera_xyz = CAMERA_MAIN;
+		flag.Camera_clear = true;
+		flag.Camera_Ortho = false;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-			if (camera->get().camera_id == CAMERA_MAIN) {
+			if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2 ) {
 				camera->get().flag_valid = true;
 			}
 			else {
 				camera->get().flag_valid = false; // invalidate other cameras
 			}
 		}
-		printf("^^^ Camera changed to main view.\n");
+		printf("^^^ Camera changed to main view & clear.\n");
+
 		glutPostRedisplay();
 		break;
 	case 'r':
-		if (Camera_rotate_flag) {
-			Camera_rotate_flag = false;
+		if (flag.Camera_rotate) {
+			flag.Camera_rotate = false;
 		}
 		else {
-			Camera_rotate_flag = true;
+			flag.Camera_rotate = true;
 		}
+		glutPostRedisplay();
 		break;
 	case 'w':
 		break;
 	case 's':
 		break;
+	case 'm':
+		// Move mode 
+		flag.Camera_move = 1 - flag.Camera_move;
+		break;
+	case '1':
+		// Show orthogonal Cam on CCTV window.
+		if(!flag.Camera_Ortho){
+			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
+					camera->get().flag_valid = true;
+				}
+				else if (camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) { 
+					camera->get().flag_valid = false;
+				}
+			}
+			flag.Camera_Ortho = true;
+		}
+		else {
+			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
+					camera->get().flag_valid = false;
+				}
+				else if (camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
+					camera->get().flag_valid = true;
+				}
+			}
+			flag.Camera_Ortho = false;
+		}
+		glutPostRedisplay();
+		break;
 	}
+
+
+
 
 }
 
@@ -216,7 +294,8 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 
 void zoomInOut(float zoomf){
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-		if (camera->get().flag_valid) {
+
+		if (camera->get().flag_valid && camera->get().flag_move) {
 			if ((camera->get().cam_proj.params.pers.fovy) / TO_RADIAN > 120.0f) {
 				camera->get().cam_proj.params.pers.fovy = 119.0f*TO_RADIAN;
 				return;
