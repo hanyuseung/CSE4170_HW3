@@ -26,9 +26,9 @@ void Axis_Object::define_axis() {
 	glBindVertexArray(0);
 }
 
-void Axis_Object::draw_axis(Shader_Simple* shader_simple, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix) {
-#define WC_AXIS_LENGTH		60.0f
-	glm::mat4 ModelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
+void Axis_Object::draw_axis(glm::mat4& ModelMatrix, Shader_Simple* shader_simple, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix) {
+
+	//ModelMatrix = glm::scale(ModelMatrix, glm::vec3(WC_AXIS_LENGTH, WC_AXIS_LENGTH, WC_AXIS_LENGTH));
 	glm::mat4 ModelViewProjectionMatrix = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 	glUseProgram(shader_simple->h_ShaderProgram);
@@ -97,6 +97,10 @@ void Scene::build_dynamic_world() {
 	dynamic_geometry_data.cow_d_2.define_object();
 	dynamic_object_ID_mapper[DYNAMIC_OBJECT_COW_2] = dynamic_objects.size();
 	dynamic_objects.push_back(dynamic_geometry_data.cow_d_2);
+	
+	dynamic_geometry_data.Ben_d.define_object();
+	dynamic_object_ID_mapper[DYNAMIC_OBJECT_BEN] = dynamic_objects.size();
+	dynamic_objects.push_back(dynamic_geometry_data.Ben_d);
 }
 
 void Scene::create_camera_list(int win_width, int win_height, float win_aspect_ratio) {
@@ -135,6 +139,11 @@ void Scene::create_camera_list(int win_width, int win_height, float win_aspect_r
 	camera_data.cam_cc2.define_camera(win_width, win_height, win_aspect_ratio);
 	camera_ID_mapper[CAMERA_CC_2] = camera_list.size();
 	camera_list.push_back(camera_data.cam_cc2);
+
+	//Dynamic Cam
+	camera_data.cam_dynamic.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_DYNAMIC] = camera_list.size();
+	camera_list.push_back(camera_data.cam_dynamic);
 	// define others here
 
 
@@ -154,10 +163,7 @@ void Scene::create_camera_list(int win_width, int win_height, float win_aspect_r
 	camera_ID_mapper[CAMERA_ORTHO_Z] = camera_list.size();
 	camera_list.push_back(camera_data.cam_ortho_z);
 
-	//Dynamic Cam
-	/*camera_data.cam_dynamic.define_camera(win_width, win_height, win_aspect_ratio);
-	camera_ID_mapper[CAMERA_DYNAMIC] = camera_list.size();
-	camera_list.push_back(camera_data.cam_dynamic);*/
+	
 }
 
 void Scene::build_shader_list() {
@@ -191,8 +197,9 @@ void Scene::draw_dynamic_world() {
 }
 
 void Scene::draw_axis() {
-	axis_object.draw_axis(static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
+	axis_object.draw_axis(AxisMatrix, static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
 		ViewMatrix, ProjectionMatrix);
+	
 }
 
 void Scene::draw_world() {

@@ -147,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="My_Shading.h" />
     <ClInclude Include="Scene_Definitions.h" />
     <ClInclude Include="Shaders\LoadShaders.h" />
   </ItemGroup>

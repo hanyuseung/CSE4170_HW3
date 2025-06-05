@@ -6,14 +6,81 @@
 #include <GL/freeglut.h>
 #include "Shaders/LoadShaders.h"
 #include "Scene_Definitions.h"
+#include "My_Shading.h"
+
 
 using namespace glm;
 
 Scene scene;
 
-#define CAMERA_X 0;
-#define CAMERA_Y 1;
-#define CAMERA_Z 2;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#define WC_AXIS_LENGTH		60.0f
 
 const int FPS = 60;
 const float DT = 1.0f/FPS;
@@ -26,6 +93,8 @@ typedef struct Flag {
 	bool Camera_clear = { false };
 	bool Camera_Ortho = { false };
 	bool First = { false };
+	bool Axis_Toggle = { false };
+	int rotate_toggle = { 1 };
 }Flag;
 
 typedef struct Mouse {
@@ -55,6 +124,23 @@ void centerMouse() {
 
 
 
+void draw_camera_axis(const Camera &camera) {
+	vec3 u = camera.cam_view.uaxis;
+	vec3 n = camera.cam_view.naxis;
+	vec3 v = camera.cam_view.vaxis;
+	vec3 pos = camera.cam_view.pos;
+
+	mat4 R = mat4(1.0f);
+	R[0] = vec4(u, 0.0f);
+	R[1] = vec4(v, 0.0f);   
+	R[2] = vec4(n, 0.0f);
+	R[3] = vec4(pos, 1.0f);
+	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
+	scene.AxisMatrix = R;
+	scene.draw_axis();
+}
+
+
 void display(void) {
 	// To get shift key input
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -62,28 +148,69 @@ void display(void) {
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
 		//clear main camera
+		if (flag.Axis_Toggle) {
+			scene.AxisMatrix = scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
+		}
+		else {
+			draw_camera_axis(*camera);
+		}
 		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { 
 			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); 
 			flag.Camera_clear = false;
 		}
 		// cam rotate
-		if (flag.Camera_rotate && camera->get().flag_move) {
-			
-			switch (flag.Camera_xyz) {
-			case 0: 
-				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 1:
-				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(0.0f, 1.0f, 0.0f));
-				break;
-			case 2:
-				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(0.0f, 0.0f, 1.0f));
-				break;
+		if (!flag.Camera_move && camera->get().camera_id == CAMERA_MAIN && camera->get().flag_move) {
+			vec3 front = -normalize(camera->get().cam_view.naxis);
+			vec3 side = normalize(camera->get().cam_view.uaxis);
+			vec3 top = normalize(camera->get().cam_view.vaxis);
+			if (flag.Camera_rotate) {
+				switch (flag.Camera_xyz) {
+				case 1:
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, camera->get().cam_view.pos);
+					camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, flag.rotate_toggle * 100 * DT * TO_RADIAN, front);
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, -camera->get().cam_view.pos);
+					break;
+				case 2:
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, camera->get().cam_view.pos);
+					camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, flag.rotate_toggle * 100 * DT * TO_RADIAN, side);
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, -camera->get().cam_view.pos);
+					break;
+				case 3:
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, camera->get().cam_view.pos);
+					camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, flag.rotate_toggle * 100 * DT * TO_RADIAN, top);
+					camera->get().ViewMatrix = translate(camera->get().ViewMatrix, -camera->get().cam_view.pos);
+					break;
+				default:
+					break;
+				}
+			}
+			for (int i = 0; i < 6; i++) {
+
+				if (flag.camera_wasd[i]) {
+					vec3 movement(0.0f);
+					switch (i) {
+						// 바라보고 있는 방향으로 움직이려면? n axis normalize해서 가중.
+					case 0: // w
+						movement = front * 100.0f * DT;
+						break;
+						// 바로보고 있는 방향 옆으로 움직이기: u axis normalize 해서 가중.
+					case 3: // d
+						movement = side * 100.0f * DT;
+						break;
+					case 2: // s
+						movement = -front * 100.0f * DT;
+						break;
+					case 1: // a
+						movement = -side * 100.0f * DT;
+						break;
+					}
+					mat4 newmat = translate(mat4(1.0f), -movement);
+					camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
+				}
 			}
 		}
 		
-		if (flag.Camera_move && camera->get().camera_id == CAMERA_MAIN) {
-		
+		if (flag.Camera_move && camera->get().camera_id == CAMERA_DYNAMIC) {
 			mat4 oldVM = camera->get().ViewMatrix;
 			mat4 R = rotate(mat4(1.0f), mouse.angle.y, vec3(1.0f, 0.0f, 0.0f));
 			R = rotate(R, -mouse.angle.x, vec3(0.0f, 1.0f, 0.0f));
@@ -92,10 +219,13 @@ void display(void) {
 			
 			camera->get().ViewMatrix = R;
 			
+			//update.
 			vec3 new_uaxis = vec3(R[0][0], R[1][0], R[2][0]);
-			//camera->get().cam_view.uaxis = new_uaxis;
 			vec3 new_naxis = vec3(R[0][2], R[1][2], R[2][2]);
 			vec3 new_vaxis = vec3(R[0][1], R[1][1], R[2][1]);
+			camera->get().cam_view.naxis = new_naxis;
+			camera->get().cam_view.uaxis = new_uaxis;
+			camera->get().cam_view.vaxis = new_vaxis;
 			
 			vec3 front = normalize(-new_naxis);
 			front.z = 0.0f;
@@ -144,8 +274,6 @@ void display(void) {
 
 		scene.draw_world();
 	}
-	
-
 	glutSwapBuffers();
 }
 
@@ -205,7 +333,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 	case 'x':
 		// Change vm to x axis
 		if (flag.Camera_rotate) {
-			flag.Camera_xyz = CAMERA_X;
+			flag.Camera_xyz = 1;
 			break;
 		}
 
@@ -225,7 +353,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 		// Change vm to y axis
 
 		if (flag.Camera_rotate) {
-			flag.Camera_xyz = CAMERA_Y;
+			flag.Camera_xyz = 2;
 			break;
 		}
 
@@ -250,7 +378,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 
 
 		if (flag.Camera_rotate) {
-			flag.Camera_xyz = CAMERA_Z;
+			flag.Camera_xyz = 3;
 			break;
 		}
 
@@ -309,8 +437,31 @@ void keyboardDown(unsigned char key, int x, int y) {
 		flag.camera_wasd[3] = true;
 		break;
 	case 'm':
-		// Move mode 
-		flag.Camera_move = 1 - flag.Camera_move;
+		// Dynamic cam mode 
+		if (!flag.Camera_move) {
+			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+				if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
+					camera->get().flag_valid = false;
+				}
+				else if (camera->get().camera_id == CAMERA_DYNAMIC) {
+					camera->get().flag_valid = true; // invalidate other cameras
+				}
+				flag.Camera_move = true;
+				//flag.Camera_Ortho = true;
+			}
+		}
+		else {
+			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+				if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
+					camera->get().flag_valid = true;
+				}
+				else if (camera->get().camera_id == CAMERA_DYNAMIC){
+					camera->get().flag_valid = false; // invalidate other cameras
+				}
+			}
+			flag.Camera_move = false;
+		}
+		
 		break;
 	case '1':
 		// Show orthogonal Cam on CCTV window.
@@ -368,6 +519,20 @@ void keyboardUp(unsigned char key, int x, int y) {
 			flag.camera_wasd[5] = false;
 			break;
 		}
+		else if (flag.Camera_rotate) {
+			flag.Camera_xyz = 0;
+			break;
+		}
+	case 'x':
+		if (flag.Camera_rotate) {
+			flag.Camera_xyz = 0;
+			break;
+		}
+	case 'y':
+		if (flag.Camera_rotate) {
+			flag.Camera_xyz = 0;
+			break;
+		}
 	}
 }
 
@@ -411,7 +576,7 @@ void passivemouse(int x, int y) {
 		offset *= 0.001f;
 		//printf("%f %f\n", mouse.lastPoint.x, mouse.lastPoint.y);
 		mouse.angle = offset;
-		printf("%f %f\n", mouse.angle.x, mouse.angle.y);
+		//printf("%f %f\n", mouse.angle.x, mouse.angle.y);
 		//if (mouse.angle.x > 89.0f) mouse.angle.x = 89.0f;
 		//if (mouse.angle.y > 89.0f) mouse.angle.y = 89.0f;
 		centerMouse();
@@ -428,11 +593,19 @@ void mouseClick(int button, int state, int x, int y) {
 		if (state == GLUT_DOWN) {
 			mouse.leftPressed = true;
 			mouse.rightPressed = false;
+			flag.Axis_Toggle =  1 - flag.Axis_Toggle;
 		}
 	}
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			mouse.rightPressed = true;
+			if (flag.Camera_rotate) {
+				if (flag.rotate_toggle == 1)
+					flag.rotate_toggle = -1;
+				else
+					flag.rotate_toggle = 1;
+			}
+			
 			mouse.leftPressed = false;
 		}
 	}

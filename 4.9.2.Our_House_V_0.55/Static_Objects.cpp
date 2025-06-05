@@ -1,6 +1,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <GL/glew.h>
+#include <GL/freeglut.h>
+#include <FreeImage/FreeImage.h>
+
+
 #include "Scene_Definitions.h"
+#include "My_Shading.h"
 
 void Static_Object::read_geometry(int bytes_per_primitive) {
 	FILE* fp;
@@ -306,3 +315,11 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 		glUseProgram(0);
 	}
 }
+
+
+//NEW.
+
+
+
+
+

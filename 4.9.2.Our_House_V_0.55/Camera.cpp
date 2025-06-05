@@ -12,7 +12,7 @@ typedef struct vp {
 vp CC0; vp CC1; vp CC2;
 void init_CC(int win_width, int win_height) {
 	CC0.x = 0; CC0.y = 0; CC0.w = win_width - 800; CC0.h = win_height - 600;
-	CC1.x = 0; CC1.y = win_height - 200, CC1.w = win_width - 500; CC1.h = win_height - 600;
+	CC1.x = 0; CC1.y = win_height - 200, CC1.w = win_width - 700; CC1.h = win_height - 600;
 	CC2.x = 0; CC2.y = win_height / 2 - 100; CC2.w = win_width - 900; CC2.h = win_height - 600;
 }
 
@@ -231,7 +231,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		flag_move = false; // yes. the main camera is permitted to move
 
 		// let's use glm funtions to set up the initial camera pose
-		ViewMatrix = glm::lookAt(glm::vec3(600.0f, 600.0f, 400.0f), glm::vec3(170.0f, 110.0, 25.0f),
+		ViewMatrix = glm::lookAt(glm::vec3(185.0f, 130.0f, 25.0f), glm::vec3(240.0f, 70.0, 10.0f),
 			glm::vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
 		cam_view.uaxis = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 		cam_view.vaxis = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
@@ -241,7 +241,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
 
 		cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
-		cam_proj.params.pers.fovy = 15.0f * TO_RADIAN;
+		cam_proj.params.pers.fovy = 80.0f * TO_RADIAN;
 		cam_proj.params.pers.aspect = win_aspect_ratio;
 		cam_proj.params.pers.n = 1.0f;
 		cam_proj.params.pers.f = 50000.0f;
@@ -256,7 +256,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		flag_move = false; // yes. the main camera is permitted to move
 
 		// let's use glm funtions to set up the initial camera pose
-		ViewMatrix = glm::lookAt(glm::vec3(1100.0f, 100.0f, 400.0f), glm::vec3(0.0f, 100.0f,1.0f),
+		ViewMatrix = glm::lookAt(glm::vec3(70.0f, 120.0f, 40.0f), glm::vec3(165.0f, 55.0f,20.0f),
 			glm::vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
 		cam_view.uaxis = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 		cam_view.vaxis = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
@@ -266,7 +266,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
 
 		cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
-		cam_proj.params.pers.fovy = 13.0f * TO_RADIAN;
+		cam_proj.params.pers.fovy = 70.0f * TO_RADIAN;
 		cam_proj.params.pers.aspect = win_aspect_ratio;
 		cam_proj.params.pers.n = 1.0f;
 		cam_proj.params.pers.f = 50000.0f;
@@ -281,7 +281,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		flag_move = false; // yes. the main camera is permitted to move
 
 		// let's use glm funtions to set up the initial camera pose
-		ViewMatrix = glm::lookAt(glm::vec3(10.0f, 0.0f, 50.0f), glm::vec3(50.0f, 100.0f, 10.0f), 
+		ViewMatrix = glm::lookAt(glm::vec3(15.0f, 15.0f, 40.0f), glm::vec3(150.0f, 100.0f, 10.0f), 
 			glm::vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
 		cam_view.uaxis = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 		cam_view.vaxis = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
@@ -291,7 +291,7 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
 
 		cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
-		cam_proj.params.pers.fovy = 15.0f * TO_RADIAN;
+		cam_proj.params.pers.fovy = 60.0f * TO_RADIAN;
 		cam_proj.params.pers.aspect = win_aspect_ratio;
 		cam_proj.params.pers.n = 1.0f;
 		cam_proj.params.pers.f = 50000.0f;
@@ -301,30 +301,30 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		view_port.x = CC2.x; view_port.y = CC2.y; view_port.w = CC2.w; view_port.h = CC2.h;
 		break;
 
-	//case CAMERA_DYNAMIC:
-	//	flag_valid = false;
-	//	flag_move = true;
+	case CAMERA_DYNAMIC:
+		flag_valid = false;
+		flag_move = true;
 
-	//	// let's use glm funtions to set up the initial camera pose
-	//	ViewMatrix = glm::lookAt(glm::vec3(-200.0f, -150.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-	//		glm::vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
-	//	cam_view.uaxis = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
-	//	cam_view.vaxis = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
-	//	cam_view.naxis = glm::vec3(ViewMatrix[0][2], ViewMatrix[1][2], ViewMatrix[2][2]);
-	//	R33_t = glm::transpose(glm::mat3(ViewMatrix));
-	//	T = glm::mat4(R33_t) * ViewMatrix;
-	//	cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
+		// let's use glm funtions to set up the initial camera pose
+		ViewMatrix = glm::lookAt(glm::vec3(225.0f, 15.0f, 25.0f), glm::vec3(70.0f, 12.0f, 25.0f),
+			glm::vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
+		cam_view.uaxis = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
+		cam_view.vaxis = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
+		cam_view.naxis = glm::vec3(ViewMatrix[0][2], ViewMatrix[1][2], ViewMatrix[2][2]);
+		R33_t = glm::transpose(glm::mat3(ViewMatrix));
+		T = glm::mat4(R33_t) * ViewMatrix;
+		cam_view.pos = -glm::vec3(T[3][0], T[3][1], T[3][2]); // why does this work?
 
-	//	cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
-	//	cam_proj.params.pers.fovy = 15.0f * TO_RADIAN;
-	//	cam_proj.params.pers.aspect = win_aspect_ratio;
-	//	cam_proj.params.pers.n = 1.0f;
-	//	cam_proj.params.pers.f = 50000.0f;
+		cam_proj.projection_type = CAMERA_PROJECTION_PERSPECTIVE;
+		cam_proj.params.pers.fovy = 45.0f * TO_RADIAN;
+		cam_proj.params.pers.aspect = win_aspect_ratio;
+		cam_proj.params.pers.n = 1.0f;
+		cam_proj.params.pers.f = 50000.0f;
 
-	//	ProjectionMatrix = glm::perspective(cam_proj.params.pers.fovy, cam_proj.params.pers.aspect,
-	//		cam_proj.params.pers.n, cam_proj.params.pers.f);
-	//	view_port.x = 300; view_port.y = 0; view_port.w = win_width - 300; view_port.h = win_height;
-	//	break;
+		ProjectionMatrix = glm::perspective(cam_proj.params.pers.fovy, cam_proj.params.pers.aspect,
+			cam_proj.params.pers.n, cam_proj.params.pers.f);
+		view_port.x = 300; view_port.y = 0; view_port.w = win_width - 300; view_port.h = win_height;
+		break;
 	}
 	
 }

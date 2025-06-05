@@ -15,7 +15,7 @@
 
 #define N_MAX_STATIC_OBJECTS		10
 #define N_MAX_DYNAMIC_OBJECTS		10
-#define N_MAX_CAMERAS		10
+#define N_MAX_CAMERAS		15
 #define N_MAX_SHADERS		10
 
 extern unsigned int static_object_ID_mapper[N_MAX_STATIC_OBJECTS];
@@ -31,6 +31,7 @@ enum STATIC_OBJECT_ID {
 
 enum DYNAMIC_OBJECT_ID {
 	DYNAMIC_OBJECT_TIGER = 0, DYNAMIC_OBJECT_COW_1, DYNAMIC_OBJECT_COW_2
+	,DYNAMIC_OBJECT_BEN
 };
 
 enum SHADER_ID { SHADER_SIMPLE = 0, SHADER_PHONG, SHADER_PHONG_TEXUTRE };
@@ -78,7 +79,7 @@ struct Axis_Object {
 	GLfloat axes_color[3][3] = { { 1.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } };
 
 	void define_axis();
-	void draw_axis(Shader_Simple* shader_simple, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix);
+	void draw_axis(glm::mat4 &ModelMatrix, Shader_Simple* shader_simple, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix);
 };
 
 struct Static_Object { // an object that does not move
@@ -175,10 +176,16 @@ struct Cow_D : public Dynamic_Object {
 	void define_object(); 
 };
 
+struct Ben_D : public Dynamic_Object {
+	Ben_D(DYNAMIC_OBJECT_ID _object_id) : Dynamic_Object(_object_id){}
+	void define_object();
+};
+
 struct Dynamic_Geometry_Data {
 	Tiger_D tiger_d{ DYNAMIC_OBJECT_TIGER };
 	Cow_D cow_d_1{ DYNAMIC_OBJECT_COW_1 };
 	Cow_D cow_d_2{ DYNAMIC_OBJECT_COW_2 };
+	Ben_D Ben_d{ DYNAMIC_OBJECT_BEN };
 };
 
 struct Window {
@@ -205,6 +212,9 @@ struct Scene {
 
 	glm::mat4 ViewMatrix;
 	glm::mat4 ProjectionMatrix;
+
+	// New
+	glm::mat4 AxisMatrix; //= glm::mat4(1.0f);
 
 	Axis_Object axis_object;
 
