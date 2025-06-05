@@ -10,6 +10,7 @@ enum Camera_ID { // x:1, y:2, z:3
 	CAMERA_MAIN = 0, CAMERA_SIDE_FRONT = 2, CAMERA_TOP = 3,
 	CAMERA_SIDE = 1, CAMERA_CC_0 = 4, CAMERA_CC_1 = 5, CAMERA_CC_2 = 6,
 	CAMERA_ORTHO_X = 7, CAMERA_ORTHO_Y = 8, CAMERA_ORTHO_Z = 9,
+	CAMERA_DYNAMIC = 10,
 };
 
 struct Camera_View {
@@ -68,4 +69,6 @@ struct Camera_Data {
 	Orthographic_Camera cam_ortho_x{ CAMERA_ORTHO_X };
 	Orthographic_Camera cam_ortho_y{ CAMERA_ORTHO_Y };
 	Orthographic_Camera cam_ortho_z{ CAMERA_ORTHO_Z };
+
+	Perspective_Camera cam_dynamic{ CAMERA_DYNAMIC };
 };

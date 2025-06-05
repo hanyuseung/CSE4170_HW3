@@ -20,17 +20,22 @@ const float DT = 1.0f/FPS;
 
 typedef struct Flag {
 	int Camera_xyz = { 0 };
+	bool camera_wasd[6] = { false, false, false, false, false, false};
 	bool Camera_rotate = { false };
-	bool Camera_gofront = { false };
-	bool Camera_goback = { false };
 	bool Camera_move = { false };
 	bool Camera_clear = { false };
 	bool Camera_Ortho = { false };
+	bool First = { false };
 }Flag;
 
 typedef struct Mouse {
 	vec2 point;
+	vec2 lastPoint;
+	vec2 angle; // 좌우, 상하
 	float zoomfactor = { 1.0f };
+	bool leftPressed = { false }, rightPressed = { false };
+	bool firstMouse = { true };
+	vec3 camFront;
 }Mouse;
 
 Mouse mouse;
@@ -41,16 +46,29 @@ void update();
 void updateCamRotate(float dt);
 void zoomInOut(float z);
 void mouseWheel(int wheel, int direction, int x, int y);
+void centerMouse() {
+	int centerX = scene.window.width / 2;
+	int centerY = scene.window.height / 2;
+	glutWarpPointer(centerX, centerY);
+	mouse.lastPoint = vec2(0, 0);
+}
+
+
 
 void display(void) {
+	// To get shift key input
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
-		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { //clear main camera
-			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); // initial pose for main camera
+		//clear main camera
+		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { 
+			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); 
 			flag.Camera_clear = false;
 		}
+		// cam rotate
 		if (flag.Camera_rotate && camera->get().flag_move) {
+			
 			switch (flag.Camera_xyz) {
 			case 0: 
 				camera->get().ViewMatrix = rotate(camera->get().ViewMatrix, 100 * DT * TO_RADIAN, vec3(1.0f, 0.0f, 0.0f));
@@ -63,12 +81,60 @@ void display(void) {
 				break;
 			}
 		}
-
-		if (flag.Camera_Ortho) {
+		
+		if (flag.Camera_move && camera->get().camera_id == CAMERA_MAIN) {
+		
+			mat4 oldVM = camera->get().ViewMatrix;
+			mat4 R = rotate(mat4(1.0f), mouse.angle.y, vec3(1.0f, 0.0f, 0.0f));
+			R = rotate(R, -mouse.angle.x, vec3(0.0f, 1.0f, 0.0f));
+			R = transpose(R);
+			R = R * oldVM;
 			
-		}
-		else {
+			camera->get().ViewMatrix = R;
+			
+			vec3 new_uaxis = vec3(R[0][0], R[1][0], R[2][0]);
+			//camera->get().cam_view.uaxis = new_uaxis;
+			vec3 new_naxis = vec3(R[0][2], R[1][2], R[2][2]);
+			vec3 new_vaxis = vec3(R[0][1], R[1][1], R[2][1]);
+			
+			vec3 front = normalize(-new_naxis);
+			front.z = 0.0f;
+			vec3 side = normalize(new_uaxis);
+			side.z = 0.0f;
+			vec3 updown = normalize(new_vaxis);
+			updown.x = updown.y = 0.0f;
 
+			for (int i = 0; i < 6; i++) {
+				if (flag.camera_wasd[i]) {
+					
+					vec3 movement(0.0f);
+					switch (i) {
+					// 바라보고 있는 방향으로 움직이려면? n axis normalize해서 가중.
+					case 0: // w
+						movement = front * 100.0f * DT;
+						break;
+					// 바로보고 있는 방향 옆으로 움직이기: u axis normalize 해서 가중.
+					case 3: // d
+						movement = side * 100.0f * DT;
+						break;
+					case 2: // s
+						movement = -front * 100.0f * DT;
+						break;
+					case 1: // a
+						movement = -side * 100.0f * DT;
+						break;
+					case 4: // ' '
+						movement = updown * 100.0f * DT;
+						break;
+					case 5: // z
+						movement = -updown * 100.0f * DT;
+						break;
+					}
+					mat4 newmat = translate(mat4(1.0f), -movement);
+					camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
+				}
+			}
+			
 		}
 
 		glViewport(camera->get().view_port.x, camera->get().view_port.y,
@@ -124,7 +190,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 		}
 		glutPostRedisplay();
 		break;
-	case 'd':
+	case '2':
 		depth_test_on = 1 - depth_test_on;
 		if (depth_test_on) {
 			glEnable(GL_DEPTH_TEST);
@@ -177,6 +243,12 @@ void keyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'z':
 		// Change vm to z axis
+		if (flag.Camera_move) {
+			flag.camera_wasd[5] = true;
+			break;
+		}
+
+
 		if (flag.Camera_rotate) {
 			flag.Camera_xyz = CAMERA_Z;
 			break;
@@ -195,6 +267,10 @@ void keyboardDown(unsigned char key, int x, int y) {
 		glutPostRedisplay();
 		break;
 	case ' ':
+		if (flag.Camera_move) {
+			flag.camera_wasd[4] = true;
+			break;
+		}
 		// Change vm to main axis
 		flag.Camera_xyz = CAMERA_MAIN;
 		flag.Camera_clear = true;
@@ -221,8 +297,16 @@ void keyboardDown(unsigned char key, int x, int y) {
 		glutPostRedisplay();
 		break;
 	case 'w':
+		flag.camera_wasd[0] = true; 
+		break;
+	case 'a':
+		flag.camera_wasd[1] = true;
 		break;
 	case 's':
+		flag.camera_wasd[2] = true; 
+		break;
+	case 'd' :
+		flag.camera_wasd[3] = true;
 		break;
 	case 'm':
 		// Move mode 
@@ -264,11 +348,27 @@ void keyboardDown(unsigned char key, int x, int y) {
 void keyboardUp(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'w':
+		flag.camera_wasd[0] = false;
+		break;
+	case 'a':
+		flag.camera_wasd[1] = false;
 		break;
 	case 's':
+		flag.camera_wasd[2] = false;
 		break;
+	case 'd':
+		flag.camera_wasd[3] = false;
+		break;
+	case ' ':
+		if (flag.Camera_move)
+			flag.camera_wasd[4] = false;
+		break;
+	case 'z':
+		if (flag.Camera_move) {
+			flag.camera_wasd[5] = false;
+			break;
+		}
 	}
-		
 }
 
 void mouseWheel(int wheel, int direction, int x, int y) {
@@ -291,6 +391,53 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 	glutPostRedisplay();
 	mouse.zoomfactor = 1.0f;
 }
+
+void passivemouse(int x, int y) {
+	//printf("%d %d \n", x, y);
+
+	mouse.point.x = -scene.window.width / 2 + x;
+	mouse.point.y = scene.window.height / 2 - y;
+	if (flag.Camera_move) {
+		if (flag.First) {
+			centerMouse();
+			mouse.angle = vec2(-90.0f, 0.0f);
+			mouse.lastPoint = vec2(0.0f,0.0f);
+			flag.First = false;
+			mouse.camFront = vec3(0.0f, -0.0f, -1.0f);
+			return;
+		}
+		vec2 offset = mouse.point - mouse.lastPoint;
+		mouse.lastPoint = vec2(0.0f,0.0f);
+		offset *= 0.001f;
+		//printf("%f %f\n", mouse.lastPoint.x, mouse.lastPoint.y);
+		mouse.angle = offset;
+		printf("%f %f\n", mouse.angle.x, mouse.angle.y);
+		//if (mouse.angle.x > 89.0f) mouse.angle.x = 89.0f;
+		//if (mouse.angle.y > 89.0f) mouse.angle.y = 89.0f;
+		centerMouse();
+	}
+
+
+	
+	
+	//printf("mouse (%f %f)\n", mouse.point.x, mouse.point.y);
+}
+
+void mouseClick(int button, int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			mouse.leftPressed = true;
+			mouse.rightPressed = false;
+		}
+	}
+	if (button == GLUT_RIGHT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			mouse.rightPressed = true;
+			mouse.leftPressed = false;
+		}
+	}
+}
+
 
 void zoomInOut(float zoomf){
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
@@ -344,6 +491,8 @@ void register_callbacks(void) {
 	glutReshapeFunc(reshape);
  	glutTimerFunc(100, timer_scene, 0);
 	glutMouseWheelFunc(mouseWheel);
+	glutPassiveMotionFunc(passivemouse);
+	glutMouseFunc(mouseClick);
 //	glutCloseFunc(cleanup_OpenGL_stuffs or else); // Do it yourself!!!
 }
 

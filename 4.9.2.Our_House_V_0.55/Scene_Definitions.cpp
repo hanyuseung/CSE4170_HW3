@@ -2,6 +2,7 @@
 
 #include "Scene_Definitions.h"
 
+
 unsigned int static_object_ID_mapper[N_MAX_STATIC_OBJECTS];
 unsigned int dynamic_object_ID_mapper[N_MAX_DYNAMIC_OBJECTS];
 unsigned int camera_ID_mapper[N_MAX_CAMERAS];
@@ -152,6 +153,11 @@ void Scene::create_camera_list(int win_width, int win_height, float win_aspect_r
 	camera_data.cam_ortho_z.define_camera(win_width, win_height, win_aspect_ratio);
 	camera_ID_mapper[CAMERA_ORTHO_Z] = camera_list.size();
 	camera_list.push_back(camera_data.cam_ortho_z);
+
+	//Dynamic Cam
+	/*camera_data.cam_dynamic.define_camera(win_width, win_height, win_aspect_ratio);
+	camera_ID_mapper[CAMERA_DYNAMIC] = camera_list.size();
+	camera_list.push_back(camera_data.cam_dynamic);*/
 }
 
 void Scene::build_shader_list() {
