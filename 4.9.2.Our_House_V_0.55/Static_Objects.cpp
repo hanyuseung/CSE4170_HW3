@@ -293,6 +293,143 @@ void print_mat4(const char* string, glm::mat4 M) {
 		fprintf(stdout, "*** COL[%d] (%f, %f, %f, %f)\n", i, M[i].x, M[i].y, M[i].z, M[i].w);
 	fprintf(stdout, "**************\n\n");
 }
+
+
+
+//NEW.
+void Optimus::define_object() {
+	glm::mat4* cur_MM;
+	Material* cur_material;
+	strcpy(filename, "Data/static_objects/optimus_vnt.geom");
+	n_fields = 8;
+	front_face_mode = GL_CCW;
+	prepare_geom_of_static_object();
+	flag_valid = true;
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(145.0f, 30.0f, 0.0f));
+	*cur_MM = glm::rotate(*cur_MM, 180.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(0.04f));
+	//*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	//*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
+	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
+	cur_material->exponent = 0.21794872f * 0.6f;
+}
+
+void Helicopter::define_object() {
+	glm::mat4* cur_MM;
+	Material* cur_material;
+	strcpy(filename, "Data/static_objects/helicopter_vntm.geom");
+	n_fields = 8;
+	front_face_mode = GL_CCW;
+	prepare_geom_of_static_object();
+	flag_valid = true;
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(110.0f, 140.0f, 30.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(3.0f));
+	*cur_MM = glm::rotate(*cur_MM, -90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::rotate(*cur_MM, -20.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+
+	//*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
+	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
+	cur_material->exponent = 0.21794872f * 0.6f;
+}
+
+void Cat::define_object() {
+	glm::mat4* cur_MM;
+	Material* cur_material;
+	strcpy(filename, "Data/static_objects/cat_vnt.geom");
+	n_fields = 8;
+	front_face_mode = GL_CCW;
+	prepare_geom_of_static_object();
+	flag_valid = true;
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 147.5f, 25.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(10.0f));
+	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
+	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
+	cur_material->exponent = 0.21794872f * 0.6f;
+}
+
+
+void Tower::define_object() {
+	glm::mat4* cur_MM;
+	Material* cur_material;
+	strcpy(filename, "Data/static_objects/woodTower_vnt.geom");
+	n_fields = 8;
+	front_face_mode = GL_CCW;
+	prepare_geom_of_static_object();
+	flag_valid = true;
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 145.5f, 0.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(4.5f, 4.5f, 3.0f));
+	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
+	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
+	cur_material->exponent = 0.21794872f * 0.6f;
+}
+
+void Ironman::define_object() {
+	glm::mat4* cur_MM;
+	Material* cur_material;
+	strcpy(filename, "Data/static_objects/ironman_vnt.geom");
+	n_fields = 8;
+	front_face_mode = GL_CCW;
+	prepare_geom_of_static_object();
+	flag_valid = true;
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(185.0f, 30.0f, 0.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(5.0f));
+	*cur_MM = glm::rotate(*cur_MM, 180.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
+	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
+	cur_material->exponent = 0.21794872f * 0.6f;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix, SHADER_ID shader_kind,
 	std::vector<std::reference_wrapper<Shader>>& shader_list) {
 	glm::mat4 ModelViewProjectionMatrix;

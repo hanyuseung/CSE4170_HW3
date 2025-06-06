@@ -82,6 +82,28 @@ void Scene::build_static_world() {
 	static_geometry_data.cow.define_object();
 	static_object_ID_mapper[STATIC_OBJECT_BUILDING] = static_objects.size();
 	static_objects.push_back(static_geometry_data.cow);
+
+
+	// NEW
+	static_geometry_data.optimus.define_object();
+	static_object_ID_mapper[STATIC_OBJECT_OPTIMUS] = static_objects.size();
+	static_objects.push_back(static_geometry_data.optimus);
+
+	static_geometry_data.helicopter.define_object();
+	static_object_ID_mapper[STATIC_OBJECT_HELICOPTER] = static_objects.size();
+	static_objects.push_back(static_geometry_data.helicopter);
+
+	static_geometry_data.cat.define_object();
+	static_object_ID_mapper[STATIC_OBJECT_CAT] = static_objects.size();
+	static_objects.push_back(static_geometry_data.cat);
+
+	static_geometry_data.tower.define_object();
+	static_object_ID_mapper[STATIC_OBJECT_TOWER] = static_objects.size();
+	static_objects.push_back(static_geometry_data.tower);
+
+	static_geometry_data.ironman.define_object();
+	static_object_ID_mapper[STATIC_OBJECT_IRONMAN] = static_objects.size();
+	static_objects.push_back(static_geometry_data.ironman);
 }
 
 void Scene::build_dynamic_world() {
@@ -101,6 +123,10 @@ void Scene::build_dynamic_world() {
 	dynamic_geometry_data.Ben_d.define_object();
 	dynamic_object_ID_mapper[DYNAMIC_OBJECT_BEN] = dynamic_objects.size();
 	dynamic_objects.push_back(dynamic_geometry_data.Ben_d);
+
+	dynamic_geometry_data.spider_d.define_object();
+	dynamic_object_ID_mapper[DYNAMIC_OBJECT_SPIDER] = dynamic_objects.size();
+	dynamic_objects.push_back(dynamic_geometry_data.spider_d);
 }
 
 void Scene::create_camera_list(int win_width, int win_height, float win_aspect_ratio) {
@@ -174,6 +200,9 @@ void Scene::build_shader_list() {
 
 void Scene::initialize() {
 	axis_object.define_axis();
+	for (int i = 0; i < CC_axis_object.size(); i++) {
+		CC_axis_object[i].define_axis();
+	}
 	build_static_world();
 	build_dynamic_world();
 	create_camera_list(window.width, window.height, window.aspect_ratio);
@@ -199,7 +228,12 @@ void Scene::draw_dynamic_world() {
 void Scene::draw_axis() {
 	axis_object.draw_axis(AxisMatrix, static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
 		ViewMatrix, ProjectionMatrix);
-	
+
+	// This is for cctv unv Axis.
+	for (int i = 0; i < CC_axis_object.size(); i++) {
+		CC_axis_object[i].draw_axis(CCAxisModelMatrixes[i], static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
+			ViewMatrix, ProjectionMatrix);
+	}
 }
 
 void Scene::draw_world() {

@@ -123,21 +123,27 @@ void centerMouse() {
 }
 
 
+std::vector <Axis_Object> Axis_list;
 
-void draw_camera_axis(const Camera &camera) {
-	vec3 u = camera.cam_view.uaxis;
-	vec3 n = camera.cam_view.naxis;
-	vec3 v = camera.cam_view.vaxis;
-	vec3 pos = camera.cam_view.pos;
+void init_camera_axis() {
+	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
+		if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0
+			|| camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2
+			|| camera->get().camera_id == CAMERA_DYNAMIC) {
+			vec3 u = camera->get().cam_view.uaxis;
+			vec3 n = camera->get().cam_view.naxis;
+			vec3 v = camera->get().cam_view.vaxis;
+			vec3 pos = camera->get().cam_view.pos;
 
-	mat4 R = mat4(1.0f);
-	R[0] = vec4(u, 0.0f);
-	R[1] = vec4(v, 0.0f);   
-	R[2] = vec4(n, 0.0f);
-	R[3] = vec4(pos, 1.0f);
-	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
-	scene.AxisMatrix = R;
-	scene.draw_axis();
+			mat4 R = mat4(1.0f);
+			R[0] = vec4(u, 0.0f);
+			R[1] = vec4(v, 0.0f);
+			R[2] = vec4(n, 0.0f);
+			R[3] = vec4(pos, 1.0f);
+			R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
+			scene.CCAxisModelMatrixes.push_back(R);
+		}
+	}
 }
 
 
@@ -148,12 +154,6 @@ void display(void) {
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
 		//clear main camera
-		if (flag.Axis_Toggle) {
-			scene.AxisMatrix = scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
-		}
-		else {
-			draw_camera_axis(*camera);
-		}
 		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { 
 			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); 
 			flag.Camera_clear = false;
@@ -593,7 +593,7 @@ void mouseClick(int button, int state, int x, int y) {
 		if (state == GLUT_DOWN) {
 			mouse.leftPressed = true;
 			mouse.rightPressed = false;
-			flag.Axis_Toggle =  1 - flag.Axis_Toggle;
+			scene.axistoggle =  1 - scene.axistoggle;
 		}
 	}
 	if (button == GLUT_RIGHT_BUTTON) {
@@ -729,8 +729,10 @@ void main(int argc, char *argv[]) {
 	glutCreateWindow(program_name);
 
 	greetings(program_name, messages, N_MESSAGE_LINES);
+	
 	initialize_renderer();
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	init_camera_axis();
 	glutMainLoop();
 }

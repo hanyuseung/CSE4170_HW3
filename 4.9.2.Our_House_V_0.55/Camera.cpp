@@ -12,7 +12,7 @@ typedef struct vp {
 vp CC0; vp CC1; vp CC2;
 void init_CC(int win_width, int win_height) {
 	CC0.x = 0; CC0.y = 0; CC0.w = win_width - 800; CC0.h = win_height - 600;
-	CC1.x = 0; CC1.y = win_height - 200, CC1.w = win_width - 700; CC1.h = win_height - 600;
+	CC1.x = 0; CC1.y = win_height - 200, CC1.w = win_width - 700; CC1.h = win_height - 500;
 	CC2.x = 0; CC2.y = win_height / 2 - 100; CC2.w = win_width - 900; CC2.h = win_height - 600;
 }
 
@@ -70,7 +70,7 @@ void Orthographic_Camera::define_camera(int win_width, int win_height, float win
 
 		cam_proj.projection_type = CAMERA_PROJECTION_ORTHOGRAPHIC;
 		cam_proj.params.ortho.bottom = -10.0f;
-		cam_proj.params.ortho.top = 60.0f;
+		cam_proj.params.ortho.top = 100.0f;
 		cam_proj.params.ortho.left = -260.0f;
 		cam_proj.params.ortho.right = 20.0f;
 		cam_proj.params.ortho.f = 50000.0f;
@@ -276,9 +276,9 @@ void Perspective_Camera::define_camera(int win_width, int win_height, float win_
 		view_port.x = CC1.x; view_port.y = CC1.y; view_port.w = CC1.w; view_port.h = CC1.h;
 		break;
 
-	case CAMERA_CC_2:
+	case CAMERA_CC_2: // human start
 		flag_valid = true;
-		flag_move = false; // yes. the main camera is permitted to move
+		flag_move = false; 
 
 		// let's use glm funtions to set up the initial camera pose
 		ViewMatrix = glm::lookAt(glm::vec3(15.0f, 15.0f, 40.0f), glm::vec3(150.0f, 100.0f, 10.0f), 

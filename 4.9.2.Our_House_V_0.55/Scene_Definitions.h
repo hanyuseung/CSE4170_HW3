@@ -13,7 +13,7 @@
 #define TO_RADIAN 0.01745329252f  
 #define TO_DEGREE 57.295779513f
 
-#define N_MAX_STATIC_OBJECTS		10
+#define N_MAX_STATIC_OBJECTS		16
 #define N_MAX_DYNAMIC_OBJECTS		10
 #define N_MAX_CAMERAS		15
 #define N_MAX_SHADERS		10
@@ -26,12 +26,13 @@ extern unsigned int shader_ID_mapper[N_MAX_SHADERS];
 enum STATIC_OBJECT_ID {
 	STATIC_OBJECT_BUILDING = 0, STATIC_OBJECT_TABLE, STATIC_OBJECT_LIGHT, 
 	STATIC_OBJECT_TEAPOT, STATIC_OBJECT_NEW_CHAIR, 
-	STATIC_OBJECT_FRAME, STATIC_OBJECT_NEW_PICTURE, STATIC_OBJECT_COW
+	STATIC_OBJECT_FRAME, STATIC_OBJECT_NEW_PICTURE, STATIC_OBJECT_COW,
+	STATIC_OBJECT_OPTIMUS, STATIC_OBJECT_HELICOPTER, STATIC_OBJECT_CAT, STATIC_OBJECT_TOWER, STATIC_OBJECT_IRONMAN
 };
 
 enum DYNAMIC_OBJECT_ID {
 	DYNAMIC_OBJECT_TIGER = 0, DYNAMIC_OBJECT_COW_1, DYNAMIC_OBJECT_COW_2
-	,DYNAMIC_OBJECT_BEN
+	,DYNAMIC_OBJECT_BEN, DYNAMIC_OBJECT_SPIDER,
 };
 
 enum SHADER_ID { SHADER_SIMPLE = 0, SHADER_PHONG, SHADER_PHONG_TEXUTRE };
@@ -141,6 +142,31 @@ struct Cow : public Static_Object {
 	void define_object(); 
 };
 
+struct Optimus :public Static_Object {
+	Optimus(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
+	void define_object();
+};
+
+struct Helicopter : public Static_Object {
+	Helicopter(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
+	void define_object();
+};
+
+struct Cat : public Static_Object {
+	Cat(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
+	void define_object();
+};
+
+struct Tower : public Static_Object {
+	Tower(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
+	void define_object();
+};
+
+struct Ironman : public Static_Object {
+	Ironman(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
+	void define_object();
+};
+
 struct Static_Geometry_Data {
 	Building building{ STATIC_OBJECT_BUILDING };
 	Table table{ STATIC_OBJECT_TABLE };
@@ -150,6 +176,13 @@ struct Static_Geometry_Data {
 	Frame frame{ STATIC_OBJECT_FRAME };
 	New_Picture new_picture{ STATIC_OBJECT_NEW_PICTURE };
 	Cow cow{ STATIC_OBJECT_COW };
+
+	//New
+	Optimus optimus{ STATIC_OBJECT_OPTIMUS };
+	Helicopter helicopter{ STATIC_OBJECT_HELICOPTER };
+	Cat cat{ STATIC_OBJECT_CAT };
+	Tower tower{ STATIC_OBJECT_TOWER };
+	Ironman ironman{ STATIC_OBJECT_IRONMAN };
 };
 
 struct Dynamic_Object { // an object that moves
@@ -176,8 +209,14 @@ struct Cow_D : public Dynamic_Object {
 	void define_object(); 
 };
 
+// NEW
 struct Ben_D : public Dynamic_Object {
 	Ben_D(DYNAMIC_OBJECT_ID _object_id) : Dynamic_Object(_object_id){}
+	void define_object();
+};
+
+struct Spider_D : public Dynamic_Object {
+	Spider_D(DYNAMIC_OBJECT_ID _object_id) :Dynamic_Object(_object_id) {}
 	void define_object();
 };
 
@@ -186,6 +225,7 @@ struct Dynamic_Geometry_Data {
 	Cow_D cow_d_1{ DYNAMIC_OBJECT_COW_1 };
 	Cow_D cow_d_2{ DYNAMIC_OBJECT_COW_2 };
 	Ben_D Ben_d{ DYNAMIC_OBJECT_BEN };
+	Spider_D spider_d{ DYNAMIC_OBJECT_SPIDER };
 };
 
 struct Window {
@@ -195,6 +235,7 @@ struct Window {
 
 struct Scene {
 	unsigned int time_stamp;
+	bool axistoggle;
 	Static_Geometry_Data static_geometry_data;
 	std::vector<std::reference_wrapper<Static_Object>> static_objects;
 
@@ -218,12 +259,18 @@ struct Scene {
 
 	Axis_Object axis_object;
 
+	// These are for CCTV Axis
+	std::vector<Axis_Object> CC_axis_object;
+	std::vector<glm::mat4> CCAxisModelMatrixes;
+
 	Scene() {
 		time_stamp = 0;
+		axistoggle = false;
 		static_objects.clear();
 		shader_list.clear();
 		shader_kind = SHADER_SIMPLE;
 		ViewMatrix = ProjectionMatrix = glm::mat4(1.0f);
+		// Cam id 5°³
 	}
 
 	void clock(int clock_id);
