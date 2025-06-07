@@ -276,16 +276,16 @@ void Cow::define_object() {
 
 	instances.emplace_back();
 	cur_MM = &(instances.back().ModelMatrix);
-	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(215.0f, 100.0f, 9.5f));
-	*cur_MM = glm::scale(*cur_MM, glm::vec3(30.0f, 30.0f, 30.0f));
-	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 147.5f, 30.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(20.0f));
+	//*cur_MM = glm::rotate(*cur_MM, 0.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
 	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
 	cur_material = &(instances.back().material);
 	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	cur_material->ambient = glm::vec4(0.329412f, 0.223529f, 0.027451f, 1.0f);
-	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
-	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
-	cur_material->exponent = 0.21794872f * 0.6f;
+	cur_material->ambient = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+	cur_material->specular = glm::vec4(0.774597f, 0.774597f, 0.774597f, 1.0f);
+	cur_material->exponent = 128.0f * 0.6f;
 }
 void print_mat4(const char* string, glm::mat4 M) {
 	fprintf(stdout, "\n***** %s ******\n", string);
@@ -357,7 +357,7 @@ void Cat::define_object() {
 
 	instances.emplace_back();
 	cur_MM = &(instances.back().ModelMatrix);
-	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 147.5f, 25.0f));
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(195.0f, 147.5f, 34.0f));
 	*cur_MM = glm::scale(*cur_MM, glm::vec3(10.0f));
 	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
 	*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -415,16 +415,6 @@ void Ironman::define_object() {
 	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
 	cur_material->exponent = 0.21794872f * 0.6f;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

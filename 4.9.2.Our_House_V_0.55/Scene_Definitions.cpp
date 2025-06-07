@@ -200,9 +200,6 @@ void Scene::build_shader_list() {
 
 void Scene::initialize() {
 	axis_object.define_axis();
-	for (int i = 0; i < CC_axis_object.size(); i++) {
-		CC_axis_object[i].define_axis();
-	}
 	build_static_world();
 	build_dynamic_world();
 	create_camera_list(window.width, window.height, window.aspect_ratio);
@@ -221,18 +218,31 @@ void Scene::draw_dynamic_world() {
 	glm::mat4 ModelViewProjectionMatrix;
 	for (auto dynamic_object = dynamic_objects.begin(); dynamic_object != dynamic_objects.end(); dynamic_object++) {
 		if (dynamic_object->get().flag_valid == false) continue;
-		dynamic_object->get().draw_object(ViewMatrix, ProjectionMatrix, shader_kind, shader_list, time_stamp);
+		if (dynamic_object->get().object_id == DYNAMIC_OBJECT_BEN) {
+			dynamic_object->get().draw_object(DynamicModelMatrixes[0], ViewMatrix, ProjectionMatrix, shader_kind, shader_list, time_stamp);
+		}
+		else if (dynamic_object->get().object_id == DYNAMIC_OBJECT_SPIDER) {
+			dynamic_object->get().draw_object(DynamicModelMatrixes[1], ViewMatrix, ProjectionMatrix, shader_kind, shader_list, time_stamp);
+		}
+		else { // Not use first parameter
+			dynamic_object->get().draw_object(DynamicModelMatrixes[0], ViewMatrix, ProjectionMatrix, shader_kind, shader_list, time_stamp);
+		}
 	}
 }
 
 void Scene::draw_axis() {
-	axis_object.draw_axis(AxisMatrix, static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
-		ViewMatrix, ProjectionMatrix);
+	if (axistoggle) {
+		axis_object.draw_axis(AxisMatrix, static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
+			ViewMatrix, ProjectionMatrix);
+
+	}
 
 	// This is for cctv unv Axis.
-	for (int i = 0; i < CC_axis_object.size(); i++) {
-		CC_axis_object[i].draw_axis(CCAxisModelMatrixes[i], static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
-			ViewMatrix, ProjectionMatrix);
+	else {
+		for (int i = 0; i < CC_axis_object.size(); i++) {
+			CC_axis_object[i].draw_axis(CCAxisModelMatrixes[i], static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
+				ViewMatrix, ProjectionMatrix);
+		}
 	}
 }
 

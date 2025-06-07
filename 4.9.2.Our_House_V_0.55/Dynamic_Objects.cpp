@@ -3,170 +3,17 @@
 #include "Scene_Definitions.h"
 #include <vector>
 
-#define LEFT 1
-#define UP 2
-#define DOWN 3
-#define RIGHT 4\
-
-#define TURNLEFT 1
-#define TURNNO 0
-#define TURNRIGHT -1
 
 
 
 
-typedef struct Route {
-	glm::vec2 rt;
-	int dir; // 1:left 2:up 3:down 4:right 
-	int rotate; // 1: Turn left -1: Turn Right 0: Turn no
-}Route;
 
-std::vector <Route> R1;
-std::vector <Route> R2;
-std::vector <Route> R3;
-std::vector <Route> R4;
-
-void Init_route() {
-	Route route;
-	route.rt = glm::vec2(20.0f, 20.0f);
-	route.dir = DOWN;
-	route.rotate = TURNNO;
-	R1.push_back(route);
-	route.rt = glm::vec2(80.0f, 20.0f);
-	route.dir = RIGHT;
-	route.rotate = TURNLEFT;
-	R1.push_back(route);
-	route.rt = glm::vec2(80.0f, 100.0f);
-	route.dir = UP;
-	route.rotate = TURNLEFT;
-	R1.push_back(route);
-	route.rt = glm::vec2(125.0f, 100.0f);
-	route.dir = RIGHT;
-	route.rotate = TURNRIGHT;
-	R1.push_back(route);
-
-	route.rt = glm::vec2(165.0f, 100.0f);
-	route.dir = RIGHT;
-	route.rotate = TURNNO;
-	R2.push_back(route);
-
-	route.rt = glm::vec2(210.0f, 100.0f);
-	route.dir = RIGHT;
-	route.rotate = TURNNO;
-	R3.push_back(route);
-
-	route.rt = glm::vec2(210.0f, 65.0f);
-	route.dir = DOWN;
-	route.rotate = TURNRIGHT;
-	R4.push_back(route);
-	route.rt = glm::vec2(185.0f, 65.0f);
-	route.dir = DOWN;
-	route.rotate = TURNRIGHT;
-	R4.push_back(route);
-	route.rt = glm::vec2(185.0f, 50.0f);
-	route.dir = DOWN;
-	route.rotate = TURNLEFT;
-	R4.push_back(route);
-}
-
-void go_route(glm::mat4 &MM, int &time_stamp) {
-	for (auto route = R1.begin(); route !=R1.end(); route++) {
-		if(route->rotate) // Not TURNNO
-			MM = glm::rotate(MM, route->rotate * 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
-		switch (route->dir) {
-		case UP:
-			while (MM[3][1] >= route->rt.y) // position y
-				MM = glm::translate(MM, glm::vec3(0.0f, time_stamp * 1.0f, 1.0f));
-			break;
-		case DOWN:
-			while (MM[3][1] <= route->rt.y)
-				MM = glm::translate(MM, glm::vec3(0.0f, -time_stamp * 1.0f, 1.0f));
-			break;
-		case LEFT:
-			while (MM[3][0] <= route->rt.x) // position x
-				MM = glm::translate(MM, glm::vec3(-time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		case RIGHT:
-			while (MM[3][0] >= route->rt.x)
-				MM = glm::translate(MM, glm::vec3(time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		}
-	}
-	for (auto route = R2.begin(); route != R2.end(); route++) {
-		if (route->rotate) // Not TURNNO
-			MM = glm::rotate(MM, route->rotate * 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
-		switch (route->dir) {
-		case UP:
-			while (MM[3][1] >= route->rt.y) // position y
-				MM = glm::translate(MM, glm::vec3(0.0f, time_stamp * 1.0f, 1.0f));
-			break;
-		case DOWN:
-			while (MM[3][1] <= route->rt.y)
-				MM = glm::translate(MM, glm::vec3(0.0f, -time_stamp * 1.0f, 1.0f));
-			break;
-		case LEFT:
-			while (MM[3][0] <= route->rt.x) // position x
-				MM = glm::translate(MM, glm::vec3(-time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		case RIGHT:
-			while (MM[3][0] >= route->rt.x)
-				MM = glm::translate(MM, glm::vec3(time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		}
-	}
-	for (auto route = R3.begin(); route != R3.end(); route++) {
-		if (route->rotate) // Not TURNNO
-			MM = glm::rotate(MM, route->rotate * 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
-		switch (route->dir) {
-		case UP:
-			while (MM[3][1] >= route->rt.y) // position y
-				MM = glm::translate(MM, glm::vec3(0.0f, time_stamp * 1.0f, 1.0f));
-			break;
-		case DOWN:
-			while (MM[3][1] <= route->rt.y)
-				MM = glm::translate(MM, glm::vec3(0.0f, -time_stamp * 1.0f, 1.0f));
-			break;
-		case LEFT:
-			while (MM[3][0] <= route->rt.x) // position x
-				MM = glm::translate(MM, glm::vec3(-time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		case RIGHT:
-			while (MM[3][0] >= route->rt.x)
-				MM = glm::translate(MM, glm::vec3(time_stamp * 1.0f, 0.0f, 1.0f));
-			break;
-		}
-	}
-	for (auto route = R4.begin(); route != R4.end(); route++) {
-		if (route->rotate) // Not TURNNO
-			MM = glm::rotate(MM, route->rotate * 90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
-		switch (route->dir) {
-		case UP:
-			if (MM[3][1] >= route->rt.y) // position y
-				MM = glm::translate(MM, glm::vec3(0.0f, 1.0f, 1.0f));
-			break;
-		case DOWN:
-			while (MM[3][1] <= route->rt.y)
-				MM = glm::translate(MM, glm::vec3(0.0f, 1.0f, 1.0f));
-			break;
-		case LEFT:
-			while (MM[3][0] <= route->rt.x) // position x
-				MM = glm::translate(MM, glm::vec3(1.0f, 0.0f, 1.0f));
-			break;
-		case RIGHT:
-			while (MM[3][0] >= route->rt.x)
-				MM = glm::translate(MM, glm::vec3(1.0f, 0.0f, 1.0f));
-			break;
-		}
-	}
-}
-
-
-
+// 안써요
 void Tiger_D::define_object() {
 #define N_TIGER_FRAMES 12
 	glm::mat4* cur_MM;
 	Material* cur_material;
-	flag_valid = true;
+	flag_valid = false;
 
 	for (int i = 0; i < N_TIGER_FRAMES; i++) {
 		object_frames.emplace_back();
@@ -192,7 +39,7 @@ void Cow_D::define_object() {
 #define N_FRAMES_COW_2 1
 	glm::mat4* cur_MM;
 	Material* cur_material;
-	flag_valid = true;
+	flag_valid = false;
 	switch (object_id) {
 
 		int n_frames;
@@ -269,12 +116,11 @@ void Ben_D::define_object() {
 		object_frames[i].instances.emplace_back();
 		cur_MM = &(object_frames[i].instances.back().ModelMatrix);
 
-		//   Ben은 크기를 그대로 두거나, 필요하면 축척(scale) 적용
-		//   여기서는 Tiger_D처럼 원본 크기를 유지한다고 가정
+		
 		*cur_MM = glm::mat4(1.0f);
 		*cur_MM = glm::rotate(*cur_MM, -90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
 		*cur_MM = glm::scale(*cur_MM, glm::vec3(60.0f));
-		*cur_MM = glm::translate(*cur_MM, glm::vec3(32.5f, 42.5f, 0.0f));
+		//*cur_MM = glm::translate(*cur_MM, glm::vec3(32.5f, 42.5f, 0.0f));
 		cur_material = &(object_frames[i].instances.back().material);
 		// Tiger_D와 동일한 머티리얼 속성 예시 (주황색 톤)
 		cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -316,11 +162,9 @@ void Spider_D::define_object() {
 		object_frames[i].instances.emplace_back();
 		cur_MM = &(object_frames[i].instances.back().ModelMatrix);
 
-		//   Ben은 크기를 그대로 두거나, 필요하면 축척(scale) 적용
-		//   여기서는 Tiger_D처럼 원본 크기를 유지한다고 가정
 		*cur_MM = glm::mat4(1.0f);
 		*cur_MM = glm::rotate(*cur_MM, -90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
-		*cur_MM = glm::rotate(*cur_MM, -90.0f * TO_RADIAN, glm::vec3(0.0f, 1.0f, 0.0f));
+		*cur_MM = glm::rotate(*cur_MM, 180.0f * TO_RADIAN, glm::vec3(0.0f, 1.0f, 0.0f));
 		*cur_MM = glm::scale(*cur_MM, glm::vec3(17.0f));
 		cur_material = &(object_frames[i].instances.back().material);
 		// Tiger_D와 동일한 머티리얼 속성 예시 (주황색 톤)
@@ -333,9 +177,9 @@ void Spider_D::define_object() {
 }
 
 
-size_t currentIndex = 0;
 
-void Dynamic_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix, SHADER_ID shader_kind,
+
+void Dynamic_Object::draw_object(glm::mat4&MM, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix, SHADER_ID shader_kind,
 	std::vector<std::reference_wrapper<Shader>>& shader_list, int time_stamp) {
 	int cur_object_index = time_stamp % object_frames.size();
 	Static_Object& cur_object = object_frames[cur_object_index];
@@ -359,11 +203,13 @@ void Dynamic_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMat
 		ModelMatrix = glm::rotate(ModelMatrix, rotation_angle, glm::vec3(1.0f, 0.0f, 0.0f));
 		break;
 	case DYNAMIC_OBJECT_BEN:
-		//rotation_angle = (5 * time_stamp % 360) * TO_RADIAN;
+		
+		ModelMatrix = MM;
+		//ModelMatrix = glm::translate(ModelMatrix, glm::vec3(20.0f, 37.5f, 0.0f));
 		break;
 	case DYNAMIC_OBJECT_SPIDER:
-		rotation_angle = (5 * time_stamp % 360) * TO_RADIAN;
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(45.0f, 135.0f, 0.0f));
+		
+		ModelMatrix = MM;
 		//ModelMatrix = glm::rotate(ModelMatrix, rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		break;
 	}

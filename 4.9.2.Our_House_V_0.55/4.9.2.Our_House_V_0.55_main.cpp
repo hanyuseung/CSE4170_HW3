@@ -7,75 +7,11 @@
 #include "Shaders/LoadShaders.h"
 #include "Scene_Definitions.h"
 #include "My_Shading.h"
-
+#include <random>
 
 using namespace glm;
 
 Scene scene;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -89,12 +25,18 @@ typedef struct Flag {
 	int Camera_xyz = { 0 };
 	bool camera_wasd[6] = { false, false, false, false, false, false};
 	bool Camera_rotate = { false };
-	bool Camera_move = { false };
+	bool Camera_Dynamic = { false };
 	bool Camera_clear = { false };
 	bool Camera_Ortho = { false };
 	bool First = { false };
 	bool Axis_Toggle = { false };
 	int rotate_toggle = { 1 };
+
+	bool Spider_done = { false };
+	bool Ben_done = { false };
+	bool Spider_start = { false };
+	bool Ben_Die = { false };
+	bool spider_die_start = { false };
 }Flag;
 
 typedef struct Mouse {
@@ -111,26 +53,583 @@ Mouse mouse;
 
 Flag flag;
 
+
+
 void update();
 void updateCamRotate(float dt);
 void zoomInOut(float z);
 void mouseWheel(int wheel, int direction, int x, int y);
+void init_BenRoute();
+
+
 void centerMouse() {
 	int centerX = scene.window.width / 2;
 	int centerY = scene.window.height / 2;
 	glutWarpPointer(centerX, centerY);
 	mouse.lastPoint = vec2(0, 0);
 }
+void pprint_mat4(const char* string, glm::mat4 M);
+
+
+
+#define LEFT 1
+#define UP 2
+#define DOWN 3
+#define RIGHT 4 
+
+
+
+
+
+typedef struct Route {
+	glm::vec2 rt;
+	int dir; // 1:left 2:up 3:down 4:right 
+}Route;
+
+std::vector <Route> R1;
+std::vector <Route> R2;
+std::vector <Route> R3;
+std::vector <Route> R4;
+std::vector <Route> SR4;
+
+std::vector <Route> R2_1;
+std::vector <Route> R3_1;
+std::vector <Route> R4_1;
+
+std::vector <Route> SR1;
+std::vector <Route> SR2_1;
+std::vector <Route> SR3_1;
+std::vector <Route> SR4_1;
+
+std::vector <Route> FullRoute;
+std::vector <Route> SpiderRoute;
+
+
+mat4 BenMM = mat4(1.0f);
+mat4 SpiderMM = mat4(1.0f);
+int b_cidx = 0;
+int s_cidx = 0;
+bool b_turndone = false;
+bool s_turndone = false;
+
+int b_size = 0;
+int s_size = 0;
+
+
+void Init_route() {
+	scene.DynamicModelMatrixes.clear();
+	BenMM = translate(mat4(1.0f), vec3(20.0f, 37.0f, 0.0f));
+	SpiderMM = translate(mat4(1.0f), vec3(45.0f, 135.0f, 0.0f));
+	scene.DynamicModelMatrixes.push_back(BenMM);
+	scene.DynamicModelMatrixes.push_back(SpiderMM);
+
+	
+
+	Route route;
+	R1.clear();
+	R2.clear();
+	R3.clear();
+	R4.clear();
+	R2_1.clear();
+	R3_1.clear();
+	R4_1.clear();
+	SR4.clear();
+	SR1.clear();
+	SR2_1.clear();
+	SR3_1.clear();
+	SR4_1.clear();
+
+	FullRoute.clear();
+	SpiderRoute.clear();
+
+	route.rt = glm::vec2(20.0f, 135.0f);
+	route.dir = LEFT;
+	SR1.push_back(route);
+	route.rt = glm::vec2(20.0f, 80.0f);
+	route.dir = DOWN;
+	SR1.push_back(route);
+	route.rt = glm::vec2(80.0f, 80.0f);
+	route.dir = RIGHT;
+	SR1.push_back(route);
+	route.rt = glm::vec2(80.0f, 100.0f);
+	route.dir = UP;
+	SR1.push_back(route);
+	route.rt = glm::vec2(125.0f, 100.0f);
+	route.dir = RIGHT;
+	SR1.push_back(route);
+	
+
+	
+
+	// 기본
+
+	route.rt = glm::vec2(20.0f, 20.0f);
+	route.dir = DOWN;
+	R1.push_back(route);
+	route.rt = glm::vec2(80.0f, 20.0f);
+	route.dir = RIGHT;
+	R1.push_back(route);
+	route.rt = glm::vec2(80.0f, 100.0f);
+	route.dir = UP;
+	R1.push_back(route);
+	route.rt = glm::vec2(125.0f, 100.0f);
+	route.dir = RIGHT;
+	R1.push_back(route);
+
+	route.rt = glm::vec2(165.0f, 100.0f);
+	route.dir = RIGHT;
+	R2.push_back(route);
+
+	route.rt = glm::vec2(215.0f, 100.0f);
+	route.dir = RIGHT;
+	R3.push_back(route);
+
+	route.rt = glm::vec2(215.0f, 65.0f);
+	route.dir = DOWN;
+	R4.push_back(route);
+	route.rt = glm::vec2(185.0f, 65.0f);
+	route.dir = LEFT;
+	R4.push_back(route);
+	route.rt = glm::vec2(185.0f, 45.0f);
+	route.dir = DOWN;
+	R4.push_back(route);
+
+
+	route.rt = glm::vec2(215.0f, 65.0f);
+	route.dir = DOWN;
+	SR4.push_back(route);
+	route.rt = glm::vec2(185.0f, 65.0f);
+	route.dir = LEFT;
+	SR4.push_back(route);
+	route.rt = glm::vec2(185.0f, 60.0f);
+	route.dir = DOWN;
+	SR4.push_back(route);
+
+
+
+	// 분기점 1
+
+	route.rt = glm::vec2(125.0f, 65.0f);
+	route.dir = DOWN;
+	R2_1.push_back(route);
+	route.rt = glm::vec2(110.0f, 65.0f);
+	route.dir = LEFT;
+	R2_1.push_back(route);
+	route.rt = glm::vec2(110.0f, 20.0f);
+	route.dir = DOWN;
+	R2_1.push_back(route);
+	route.rt = glm::vec2(135.0f, 20.0f);
+	route.dir = RIGHT;
+	R2_1.push_back(route);
+
+	route.rt = glm::vec2(125.0f, 65.0f);
+	route.dir = DOWN;
+	SR2_1.push_back(route);
+	route.rt = glm::vec2(110.0f, 65.0f);
+	route.dir = LEFT;
+	SR2_1.push_back(route);
+	route.rt = glm::vec2(110.0f, 20.0f);
+	route.dir = DOWN;
+	SR2_1.push_back(route);
+	route.rt = glm::vec2(115.0f, 20.0f);
+	route.dir = RIGHT;
+	SR2_1.push_back(route);
+	
+
+	//분기점 2
+	route.rt = glm::vec2(165.0f, 147.5f);
+	route.dir = UP;
+	R3_1.push_back(route);
+	route.rt = glm::vec2(130.0f, 147.5f);
+	route.dir = LEFT;
+	R3_1.push_back(route);
+
+	route.rt = glm::vec2(165.0f, 147.5f);
+	route.dir = UP;
+	SR3_1.push_back(route);
+	route.rt = glm::vec2(160.0f, 147.5f);
+	route.dir = LEFT;
+	SR3_1.push_back(route);
+
+
+	// 분기점 3
+	route.rt = glm::vec2(215.0f, 145.0f);
+	route.dir = UP;
+	R4_1.push_back(route);
+	route.rt = glm::vec2(210.0f, 145.0f);
+	route.dir = LEFT;
+	R4_1.push_back(route);
+
+	route.rt = glm::vec2(215.0f, 145.0f);
+	route.dir = UP;
+	SR4_1.push_back(route);
+	route.rt = glm::vec2(215.0f, 145.0f);
+	route.dir = LEFT;
+	SR4_1.push_back(route);
+
+
+
+	FullRoute.insert(FullRoute.end(), R1.begin(), R1.end());
+	FullRoute.insert(FullRoute.end(), R2.begin(), R2.end());
+	FullRoute.insert(FullRoute.end(), R3.begin(), R3.end());
+	FullRoute.insert(FullRoute.end(), R4.begin(), R4.end());
+	b_size = FullRoute.size();
+
+	SpiderRoute.insert(SpiderRoute.end(), SR1.begin(), SR1.end());
+	SpiderRoute.insert(SpiderRoute.end(), R2.begin(), R2.end());
+	SpiderRoute.insert(SpiderRoute.end(), R3.begin(), R3.end());
+	SpiderRoute.insert(SpiderRoute.end(), SR4.begin(), SR4.end());
+	s_size = SpiderRoute.size();
+}
+
+
+
+
+
+
+
+
+
+void updateBenRoute() {
+
+	
+	mat4 RTM = mat4(1.0f);
+	float angleRad = 0.0f;
+
+	// 3. Ben이 도착함.
+	if (b_size <= b_cidx) {
+		
+		// 3. spider 도착 전까지 대기
+		if (!flag.Spider_done) {
+			if (!b_turndone) {
+				switch (FullRoute[b_cidx-1].dir) {
+				case UP:
+					angleRad = 2 * 90.0f * TO_RADIAN;
+					RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+					break;
+				case DOWN:
+
+					break;
+				case LEFT:
+					angleRad = -1 * 90.0f * TO_RADIAN;
+					RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+					break;
+				case RIGHT:
+					angleRad = 1 * 90.0f * TO_RADIAN;
+					RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+					break;
+				}
+			}
+			vec3 tmppos = vec3(FullRoute[b_cidx-1].rt.x, FullRoute[b_cidx-1].rt.y, 0.0f);
+			mat4 BenMM = translate(mat4(1.0f), tmppos);
+			scene.DynamicModelMatrixes[0] = BenMM * RTM;
+			return;
+		}
+
+		// 고양이에게 가서 사망 - 미구현
+		/*if (FullRoute[b_cidx - 1].rt == R4_1[R4_1.size() - 1].rt) {
+			flag.Ben_Die = true;
+		}*/
+		
+
+		// 4. spider die -> init!
+		else {
+			b_cidx = 0;
+			init_BenRoute();
+			flag.Ben_done = false;
+		}
+		return;
+		
+	}
+	Route& route = FullRoute[b_cidx];
+
+
+	// 1. Ben이 먼저 출발 후 spider에게 출발 신호 보내기
+	if ((route.rt) == (R1[2].rt)) {
+		flag.Spider_start = true;
+	}
+	
+	
+	if (!b_turndone) {
+		switch (route.dir) {
+		case UP:
+			angleRad = 2 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		case DOWN:
+			
+			break;
+		case LEFT:
+			angleRad = -1 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		case RIGHT:
+			angleRad = 1 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		}
+	}
+
+	vec2 curr_pos = vec2(BenMM[3][0], BenMM[3][1]);
+	//printf("%f %f\n", curr_pos.x, curr_pos.y);
+	vec2 target_pos = vec2(route.rt.x, route.rt.y); 
+	vec2 difference = route.rt - curr_pos;
+	float distance = length(curr_pos - target_pos);
+	float step = 25.0f * DT;
+	switch (route.dir) {
+	case UP:
+		if (difference.y < 0) { // 보정
+			BenMM = translate(BenMM, vec3(difference.x, difference.y, 0.0f));
+			b_cidx++;
+			b_turndone = false;
+		}
+		else {
+			BenMM = translate(BenMM, vec3(0.0f, step, 0.0f));
+		}
+		break;
+	case DOWN:
+		if (difference.y > 0) { // 보정
+			BenMM = translate(BenMM, vec3(difference.x, difference.y, 0.0f));
+			b_cidx++;
+			b_turndone = false;
+		}
+		else {
+			BenMM = translate(BenMM, vec3(0.0f, -step, 0.0f));
+		}
+		break;
+	case LEFT:
+		if (difference.x > 0) { // 보정
+			BenMM = translate(BenMM, vec3(difference.x, difference.y, 0.0f));
+			b_cidx++;
+			b_turndone = false;
+		}
+		else {
+			BenMM = translate(BenMM, vec3(-step, 0.0f, 0.0f));
+		}
+		break;
+	case RIGHT:
+		if (difference.x < 0) { // 보정
+			BenMM = translate(BenMM, vec3(difference.x, difference.y, 0.0f));
+			b_cidx++;
+			b_turndone = false;
+		}
+		else {
+			BenMM = translate(BenMM, vec3(step, 0.0f, 0.0f));
+		}
+		break;
+	}
+	
+	scene.DynamicModelMatrixes[0] = BenMM*RTM;
+}
+
+
+int spiderDeathStart = -1;
+
+void updateSpiderRoute() {
+
+	// 2. Ben이 출발 보내기 전까지는 wait.
+	if (!flag.Spider_start) {
+		SpiderMM = translate(mat4(1.0f), vec3(45.0f, 135.0f, 0.0f));
+		scene.DynamicModelMatrixes[1] = SpiderMM;
+		return;
+	}
+	
+	// 2. Ben이 출발 신호를 보냈다면
+
+
+	// 4. Spider 도착 및 사망모션 시작
+	mat4 RTM = mat4(1.0f);
+	float angleRad = 0.0f;
+	if (s_size <= s_cidx) {
+		if (spiderDeathStart < 0) { // 사망 모션 시작 시각.
+			spiderDeathStart = scene.time_stamp;
+			flag.spider_die_start = true;
+		}
+		if (!b_turndone) {
+			switch (SpiderRoute[s_cidx-1].dir) {
+			case UP:
+				angleRad = 2 * 90.0f * TO_RADIAN;
+				RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+				break;
+			case DOWN:
+				break;
+			case LEFT:
+				angleRad = -1 * 90.0f * TO_RADIAN;
+				RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+				break;
+			case RIGHT:
+				angleRad = 1 * 90.0f * TO_RADIAN;
+				RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+				break;
+			}
+		}
+		// 사망 모션
+		float rotation_angle = (5 * (scene.time_stamp - spiderDeathStart) % 360) * TO_RADIAN;
+		mat4 rottt = translate(mat4(1.0f), vec3(0.0f, 0.0f, 10.0f));
+		rottt = rotate(rottt, rotation_angle, vec3(0.0f, 1.0f, 0.0f));
+
+		vec3 tmppos = vec3(SpiderRoute[s_cidx - 1].rt.x, SpiderRoute[s_cidx - 1].rt.y, 0.0f);
+		mat4 SpiderMM = translate(mat4(1.0f), tmppos);
+		scene.DynamicModelMatrixes[1] = SpiderMM * RTM * rottt;
+		
+
+		// 사망 모션 끝 - init후 재시작. in ben
+		if ((rotation_angle >= 180.0f*TO_RADIAN)) {
+			flag.Spider_done = true;
+			s_cidx = 0;
+			spiderDeathStart = -1;
+		}
+		return;
+	}
+	
+	Route& route = SpiderRoute[s_cidx];
+
+	
+
+	if (!s_turndone) {
+		switch (route.dir) {
+		case UP:
+			angleRad = 2 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		case DOWN:
+
+			break;
+		case LEFT:
+			angleRad = -1 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		case RIGHT:
+			angleRad = 1 * 90.0f * TO_RADIAN;
+			RTM = rotate(RTM, angleRad, vec3(0.0f, 0.0f, 1.0f));
+			break;
+		}
+	}
+
+	vec2 curr_pos = vec2(SpiderMM[3][0], SpiderMM[3][1]);
+	//printf("%f %f\n", curr_pos.x, curr_pos.y);
+	vec2 target_pos = vec2(route.rt.x, route.rt.y);
+	vec2 difference = route.rt - curr_pos;
+	float distance = length(curr_pos - target_pos);
+	float step = 25.0f * DT;
+	switch (route.dir) {
+	case UP:
+		if (difference.y <= 0) { // 보정
+			SpiderMM = translate(SpiderMM, vec3(difference.x, difference.y, 0.0f));
+			s_cidx++;
+			s_turndone = false;
+		}
+		else {
+			SpiderMM = translate(SpiderMM, vec3(0.0f, step, 0.0f));
+		}
+		break;
+	case DOWN:
+		if (difference.y >= 0) { // 보정
+			SpiderMM = translate(SpiderMM, vec3(difference.x, difference.y, 0.0f));
+			s_cidx++;
+			s_turndone = false;
+		}
+		else {
+			SpiderMM = translate(SpiderMM, vec3(0.0f, -step, 0.0f));
+		}
+		break;
+	case LEFT:
+		if (difference.x >= 0) { // 보정
+			SpiderMM = translate(SpiderMM, vec3(difference.x, difference.y, 0.0f));
+			s_cidx++;
+			s_turndone = false;
+		}
+		else {
+			SpiderMM = translate(SpiderMM, vec3(-step, 0.0f, 0.0f));
+		}
+		break;
+	case RIGHT:
+		if (difference.x <= 0) { // 보정
+			SpiderMM = translate(SpiderMM, vec3(difference.x, difference.y, 0.0f));
+			s_cidx++;
+			s_turndone = false;
+		}
+		else {
+			SpiderMM = translate(SpiderMM, vec3(step, 0.0f, 0.0f));
+		}
+		break;
+	}
+	scene.DynamicModelMatrixes[1] = SpiderMM * RTM;
+}
+
+
+std::random_device rd;
+std::mt19937 gen(rd());
+
+int Randint(){
+	static std::uniform_int_distribution<> distInt(1, 4);
+	return distInt(gen);
+}
+
+
+void init_BenRoute() {
+	flag.Ben_done = flag.Spider_done = flag.Spider_start = flag.Ben_Die = false;
+	FullRoute.clear();
+	SpiderRoute.clear();
+
+	FullRoute.insert(FullRoute.end(), R1.begin(), R1.end());
+	BenMM = translate(mat4(1.0f), vec3(20.0f, 37.0f, 0.0f));
+
+	SpiderRoute.insert(SpiderRoute.end(), SR1.begin(), SR1.end());
+	SpiderMM = translate(mat4(1.0f), vec3(45.0f, 135.0f, 0.0f));
+
+	switch (Randint()) {
+	case 1:
+		FullRoute.insert(FullRoute.end(), R2.begin(), R2.end());
+		FullRoute.insert(FullRoute.end(), R3.begin(), R3.end());
+		FullRoute.insert(FullRoute.end(), R4.begin(), R4.end());
+
+		SpiderRoute.insert(SpiderRoute.end(), R2.begin(), R2.end());
+		SpiderRoute.insert(SpiderRoute.end(), R3.begin(), R3.end());
+		SpiderRoute.insert(SpiderRoute.end(), SR4.begin(), SR4.end());
+		break;
+	case 2:
+		FullRoute.insert(FullRoute.end(), R2.begin(), R2.end());
+		FullRoute.insert(FullRoute.end(), R3.begin(), R3.end());
+		FullRoute.insert(FullRoute.end(), R4_1.begin(), R4_1.end());
+
+		SpiderRoute.insert(SpiderRoute.end(), R2.begin(), R2.end());
+		SpiderRoute.insert(SpiderRoute.end(), R3.begin(), R3.end());
+		SpiderRoute.insert(SpiderRoute.end(), SR4_1.begin(), SR4_1.end());
+
+		break;
+	case 3:
+		FullRoute.insert(FullRoute.end(), R2.begin(), R2.end());
+		FullRoute.insert(FullRoute.end(), R3_1.begin(), R3_1.end());
+
+		SpiderRoute.insert(SpiderRoute.end(), R2.begin(), R2.end());
+		SpiderRoute.insert(SpiderRoute.end(), SR3_1.begin(), SR3_1.end());
+
+		break;
+	case 4:
+		FullRoute.insert(FullRoute.end(), R2_1.begin(), R2_1.end());
+		SpiderRoute.insert(SpiderRoute.end(), SR2_1.begin(), SR2_1.end());
+		break;
+	}
+	b_size = FullRoute.size();
+	s_size = SpiderRoute.size();
+}
+
+
 
 
 std::vector <Axis_Object> Axis_list;
 
+
+
+
 void init_camera_axis() {
+	scene.AxisMatrix = scale(mat4(1.0f), vec3(1.0f) * WC_AXIS_LENGTH);
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0
 			|| camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2
 			|| camera->get().camera_id == CAMERA_DYNAMIC) {
-			vec3 u = camera->get().cam_view.uaxis;
+			vec3 u = camera->get().cam_view.uaxis; 
 			vec3 n = camera->get().cam_view.naxis;
 			vec3 v = camera->get().cam_view.vaxis;
 			vec3 pos = camera->get().cam_view.pos;
@@ -144,7 +643,29 @@ void init_camera_axis() {
 			scene.CCAxisModelMatrixes.push_back(R);
 		}
 	}
+	scene.CC_axis_object.resize(scene.CCAxisModelMatrixes.size());
+	for (int i = 0; i < scene.CCAxisModelMatrixes.size(); i++) {
+		scene.CC_axis_object[i].define_axis();
+	}
 }
+
+void update_main_cam_axis(Camera &camera) {
+	mat4 R = inverse(camera.ViewMatrix);
+	vec3 pos = vec3(R[3][0], R[3][1], R[3][2]);
+	camera.cam_view.pos = pos;
+	camera.cam_view.uaxis = vec3(R[0]);
+	camera.cam_view.vaxis = vec3(R[1]);
+	camera.cam_view.naxis = vec3(R[2]);
+	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
+	scene.CCAxisModelMatrixes[0] = R;
+}
+
+void update_dynamic_cam_axis(Camera& camera) {
+	mat4 R = inverse(camera.ViewMatrix);
+	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
+	scene.CCAxisModelMatrixes[4] = R;
+}
+
 
 
 void display(void) {
@@ -154,12 +675,16 @@ void display(void) {
 	for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 		if (camera->get().flag_valid == false) continue;
 		//clear main camera
-		if (flag.Camera_clear && camera-> get().camera_id == CAMERA_MAIN) { 
-			camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f)); 
-			flag.Camera_clear = false;
+		if (camera-> get().camera_id == CAMERA_MAIN) { 
+			
+			if (flag.Camera_clear) {
+				camera->get().ViewMatrix = lookAt(vec3(-600.0f, -600.0f, 400.0f), vec3(125.0f, 80.0f, 25.0f), vec3(0.0f, 0.0f, 1.0f));
+				flag.Camera_clear = false;
+			}
 		}
-		// cam rotate
-		if (!flag.Camera_move && camera->get().camera_id == CAMERA_MAIN && camera->get().flag_move) {
+		// Main cam Move
+		if (!flag.Camera_Dynamic && camera->get().camera_id == CAMERA_MAIN && camera->get().flag_move) {
+			
 			vec3 front = -normalize(camera->get().cam_view.naxis);
 			vec3 side = normalize(camera->get().cam_view.uaxis);
 			vec3 top = normalize(camera->get().cam_view.vaxis);
@@ -183,6 +708,7 @@ void display(void) {
 				default:
 					break;
 				}
+				update_main_cam_axis(*camera);
 			}
 			for (int i = 0; i < 6; i++) {
 
@@ -203,14 +729,21 @@ void display(void) {
 					case 1: // a
 						movement = -side * 100.0f * DT;
 						break;
+					case 4: //' '
+						movement = top * 100.0f * DT;
+						break;
+					case 5: // z
+						movement = -top * 100.0f * DT;
+						break;
 					}
 					mat4 newmat = translate(mat4(1.0f), -movement);
 					camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
+					update_main_cam_axis(*camera);
 				}
 			}
 		}
 		
-		if (flag.Camera_move && camera->get().camera_id == CAMERA_DYNAMIC) {
+		if (flag.Camera_Dynamic && camera->get().camera_id == CAMERA_DYNAMIC) {
 			mat4 oldVM = camera->get().ViewMatrix;
 			mat4 R = rotate(mat4(1.0f), mouse.angle.y, vec3(1.0f, 0.0f, 0.0f));
 			R = rotate(R, -mouse.angle.x, vec3(0.0f, 1.0f, 0.0f));
@@ -233,37 +766,41 @@ void display(void) {
 			side.z = 0.0f;
 			vec3 updown = normalize(new_vaxis);
 			updown.x = updown.y = 0.0f;
+			update_dynamic_cam_axis(*camera);
 
-			for (int i = 0; i < 6; i++) {
-				if (flag.camera_wasd[i]) {
-					
-					vec3 movement(0.0f);
-					switch (i) {
-					// 바라보고 있는 방향으로 움직이려면? n axis normalize해서 가중.
-					case 0: // w
-						movement = front * 100.0f * DT;
-						break;
-					// 바로보고 있는 방향 옆으로 움직이기: u axis normalize 해서 가중.
-					case 3: // d
-						movement = side * 100.0f * DT;
-						break;
-					case 2: // s
-						movement = -front * 100.0f * DT;
-						break;
-					case 1: // a
-						movement = -side * 100.0f * DT;
-						break;
-					case 4: // ' '
-						movement = updown * 100.0f * DT;
-						break;
-					case 5: // z
-						movement = -updown * 100.0f * DT;
-						break;
-					}
-					mat4 newmat = translate(mat4(1.0f), -movement);
-					camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
-				}
-			}
+
+			// Dynamic CCTV는 고정되어 있어야 한다는 걸 알은 나: ㄱ-
+			//for (int i = 0; i < 6; i++) {
+			//	if (flag.camera_wasd[i]) {
+			//		
+			//		vec3 movement(0.0f);
+			//		switch (i) {
+			//		// 바라보고 있는 방향으로 움직이려면? n axis normalize해서 가중.
+			//		case 0: // w
+			//			movement = front * 100.0f * DT;
+			//			break;
+			//		// 바로보고 있는 방향 옆으로 움직이기: u axis normalize 해서 가중.
+			//		case 3: // d
+			//			movement = side * 100.0f * DT;
+			//			break;
+			//		case 2: // s
+			//			movement = -front * 100.0f * DT;
+			//			break;
+			//		case 1: // a
+			//			movement = -side * 100.0f * DT;
+			//			break;
+			//		case 4: // ' '
+			//			movement = updown * 100.0f * DT;
+			//			break;
+			//		case 5: // z
+			//			movement = -updown * 100.0f * DT;
+			//			break;
+			//		}
+			//		mat4 newmat = translate(mat4(1.0f), -movement);
+			//		camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
+			//		update_dynamic_cam_axis(*camera);
+			//	}
+			//}
 			
 		}
 
@@ -271,7 +808,11 @@ void display(void) {
 			camera->get().view_port.w, camera->get().view_port.h);
 		scene.ViewMatrix = camera->get().ViewMatrix;
 		scene.ProjectionMatrix = camera->get().ProjectionMatrix;
-
+		int s = FullRoute.size();
+		//int ss = SpiderRoute.size();
+		
+		updateBenRoute();
+		updateSpiderRoute();
 		scene.draw_world();
 	}
 	glutSwapBuffers();
@@ -333,78 +874,45 @@ void keyboardDown(unsigned char key, int x, int y) {
 	case 'x':
 		// Change vm to x axis
 		if (flag.Camera_rotate) {
+			fprintf(stdout, "Rotate Axis : X\n");
 			flag.Camera_xyz = 1;
 			break;
 		}
-
-		flag.Camera_xyz = CAMERA_SIDE;
-		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-			if (camera->get().camera_id == CAMERA_SIDE) {
-				camera->get().flag_valid = true;
-			}
-			else {
-				camera->get().flag_valid = false; // invalidate other cameras
-			}
-		}
-		printf("^^^ Camera changed to side front view.\n");
 		glutPostRedisplay();
 		break;
 	case 'y':
 		// Change vm to y axis
 
 		if (flag.Camera_rotate) {
+			fprintf(stdout, "Rotate Axis : Y\n");
 			flag.Camera_xyz = 2;
 			break;
 		}
 
-		flag.Camera_xyz = CAMERA_SIDE_FRONT;
-		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-			if (camera->get().camera_id == CAMERA_SIDE_FRONT) {
-				camera->get().flag_valid = true;
-			}
-			else {
-				camera->get().flag_valid = false; // invalidate other cameras
-			}
-		}
-		printf("^^^ Camera changed to side front view.\n");
 		glutPostRedisplay();
 		break;
 	case 'z':
-		// Change vm to z axis
-		if (flag.Camera_move) {
-			flag.camera_wasd[5] = true;
-			break;
-		}
-
-
+		// Rotate 우선
 		if (flag.Camera_rotate) {
+			fprintf(stdout, "Rotate Axis : Z\n");
 			flag.Camera_xyz = 3;
 			break;
 		}
-
-		flag.Camera_xyz = CAMERA_TOP;
-		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-			if (camera->get().camera_id == CAMERA_TOP) {
-				camera->get().flag_valid = true;
-			}
-			else {
-				camera->get().flag_valid = false; // invalidate other cameras
-			}
-		}
-		printf("^^^ Camera changed to Top view.\n");
-		glutPostRedisplay();
-		break;
-	case ' ':
-		if (flag.Camera_move) {
-			flag.camera_wasd[4] = true;
+		if (!flag.Camera_Dynamic) {
+			flag.camera_wasd[5] = true;
 			break;
 		}
-		// Change vm to main axis
+		
+
+		
+		glutPostRedisplay();
+		break;
+	case 'p':
 		flag.Camera_xyz = CAMERA_MAIN;
 		flag.Camera_clear = true;
 		flag.Camera_Ortho = false;
 		for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
-			if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2 ) {
+			if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
 				camera->get().flag_valid = true;
 			}
 			else {
@@ -415,12 +923,24 @@ void keyboardDown(unsigned char key, int x, int y) {
 
 		glutPostRedisplay();
 		break;
+	case ' ':
+		if (!flag.Camera_Dynamic) {
+			flag.camera_wasd[4] = true;
+			break;
+		}
+
+		glutPostRedisplay();
+		break;
 	case 'r':
 		if (flag.Camera_rotate) {
+			fprintf(stdout, "Now Rotataion Disable.\n");
 			flag.Camera_rotate = false;
 		}
 		else {
+			fprintf(stdout, "Now Rotataion Available.\n");
 			flag.Camera_rotate = true;
+			flag.Camera_xyz = 0;
+			flag.rotate_toggle = 0;
 		}
 		glutPostRedisplay();
 		break;
@@ -438,33 +958,51 @@ void keyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'm':
 		// Dynamic cam mode 
-		if (!flag.Camera_move) {
+		if (!flag.Camera_Dynamic) {
+			fprintf(stdout, "Change Cam to Dynamic CCTV.\n");
 			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 				if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
 					camera->get().flag_valid = false;
 				}
+				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
+					camera->get().flag_valid = true;
+				}
+				else if (camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
+					camera->get().flag_valid = false;
+				}
+
 				else if (camera->get().camera_id == CAMERA_DYNAMIC) {
 					camera->get().flag_valid = true; // invalidate other cameras
 				}
-				flag.Camera_move = true;
+				flag.Camera_Dynamic = true;
+				flag.Camera_Ortho = true;
 				//flag.Camera_Ortho = true;
 			}
 		}
 		else {
+			fprintf(stdout, "Change Cam to Main Cam & Move mode Available.\n");
 			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 				if (camera->get().camera_id == CAMERA_MAIN || camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
+					camera->get().flag_valid = true;
+				}
+				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
+					camera->get().flag_valid = false;
+				}
+				else if (camera->get().camera_id == CAMERA_CC_0 || camera->get().camera_id == CAMERA_CC_1 || camera->get().camera_id == CAMERA_CC_2) {
 					camera->get().flag_valid = true;
 				}
 				else if (camera->get().camera_id == CAMERA_DYNAMIC){
 					camera->get().flag_valid = false; // invalidate other cameras
 				}
 			}
-			flag.Camera_move = false;
+			flag.Camera_Dynamic = false;
+			flag.Camera_Ortho = false;
 		}
 		
 		break;
 	case '1':
 		// Show orthogonal Cam on CCTV window.
+		fprintf(stdout, "Show orthogonal XYZ Cam.\n");
 		if(!flag.Camera_Ortho){
 			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
@@ -477,6 +1015,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 			flag.Camera_Ortho = true;
 		}
 		else {
+			fprintf(stdout, "Show CCTVs.\n");
 			for (auto camera = scene.camera_list.begin(); camera != scene.camera_list.end(); camera++) {
 				if (camera->get().camera_id == CAMERA_ORTHO_X || camera->get().camera_id == CAMERA_ORTHO_Y || camera->get().camera_id == CAMERA_ORTHO_Z) {
 					camera->get().flag_valid = false;
@@ -488,6 +1027,16 @@ void keyboardDown(unsigned char key, int x, int y) {
 			flag.Camera_Ortho = false;
 		}
 		glutPostRedisplay();
+		break;
+	case 'l':
+		if (!scene.axistoggle) {
+			fprintf(stdout, "Show XYZ Axis.\n");
+			scene.axistoggle = true;
+		}
+		else {
+			fprintf(stdout, "Show UVN Axis.\n");
+			scene.axistoggle = false;
+		}
 		break;
 	}
 
@@ -511,28 +1060,18 @@ void keyboardUp(unsigned char key, int x, int y) {
 		flag.camera_wasd[3] = false;
 		break;
 	case ' ':
-		if (flag.Camera_move)
+		if (!flag.Camera_Dynamic )
 			flag.camera_wasd[4] = false;
 		break;
 	case 'z':
-		if (flag.Camera_move) {
+		if (!flag.Camera_Dynamic) {
 			flag.camera_wasd[5] = false;
-			break;
 		}
-		else if (flag.Camera_rotate) {
-			flag.Camera_xyz = 0;
-			break;
-		}
+		break;
 	case 'x':
-		if (flag.Camera_rotate) {
-			flag.Camera_xyz = 0;
-			break;
-		}
+		break;
 	case 'y':
-		if (flag.Camera_rotate) {
-			flag.Camera_xyz = 0;
-			break;
-		}
+		break;
 	}
 }
 
@@ -540,13 +1079,10 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 	float zoomf = 1.0f;
 	if (direction < 0) {
 		// 휠을 위로 굴렸을 때 (줌 인)
-		//mouse.zoomfactor = 1.1f;
-		printf("zoomin\n");
 		zoomf = 1.1f;
 	}
 	else {
 		// 휠을 아래로 굴렸을 때 (줌 아웃)
-		//mouse.zoomfactor = 1.0f/1.1f;
 		zoomf = 0.9f;
 	}
 	// 필요하다면 뷰투영 행렬을 갱신하거나, 카메라 속성 업데이트
@@ -562,13 +1098,12 @@ void passivemouse(int x, int y) {
 
 	mouse.point.x = -scene.window.width / 2 + x;
 	mouse.point.y = scene.window.height / 2 - y;
-	if (flag.Camera_move) {
+	if (flag.Camera_Dynamic) {
 		if (flag.First) {
 			centerMouse();
 			mouse.angle = vec2(-90.0f, 0.0f);
 			mouse.lastPoint = vec2(0.0f,0.0f);
 			flag.First = false;
-			mouse.camFront = vec3(0.0f, -0.0f, -1.0f);
 			return;
 		}
 		vec2 offset = mouse.point - mouse.lastPoint;
@@ -592,21 +1127,24 @@ void mouseClick(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			mouse.leftPressed = true;
-			mouse.rightPressed = false;
-			scene.axistoggle =  1 - scene.axistoggle;
+			if(flag.Camera_rotate)
+				flag.rotate_toggle = -1;
+		}
+		if (state == GLUT_UP) {
+			mouse.leftPressed = false;
+			flag.rotate_toggle = 0;
 		}
 	}
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			mouse.rightPressed = true;
 			if (flag.Camera_rotate) {
-				if (flag.rotate_toggle == 1)
-					flag.rotate_toggle = -1;
-				else
-					flag.rotate_toggle = 1;
+				flag.rotate_toggle = 1;
 			}
-			
-			mouse.leftPressed = false;
+		}
+		if (state == GLUT_UP) {
+			mouse.rightPressed = false;
+			flag.rotate_toggle = 0;
 		}
 	}
 }
@@ -706,8 +1244,8 @@ void print_message(const char * m) {
 void greetings(char *program_name, char messages[][256], int n_message_lines) {
 	fprintf(stdout, "**************************************************************\n\n");
 	fprintf(stdout, "  PROGRAM NAME: %s\n\n", program_name);
-	fprintf(stdout, "    This program was coded for CSE4170/AIE4012 students\n");
-	fprintf(stdout, "      of Dept. of Comp. Sci. & Eng., Sogang University.\n\n");
+	fprintf(stdout, "    This program was coded by 20211607 HanYuSeung\n");
+	fprintf(stdout, "      of Dept. of Comp. Sci. Sogang University.\n\n");
 
 	for (int i = 0; i < n_message_lines; i++)
 		fprintf(stdout, "%s\n", messages[i]);
@@ -718,8 +1256,10 @@ void greetings(char *program_name, char messages[][256], int n_message_lines) {
 
 #define N_MESSAGE_LINES 1
 void main(int argc, char *argv[]) { 
-	char program_name[256] = "Sogang CSE4170/AIE4120 Our_House_GLSL_V_0.55";
-	char messages[N_MESSAGE_LINES][256] = { "    - Keys used: fill it yourself!" };
+	char program_name[256] = " I HATE SPIDER ";
+	char messages[N_MESSAGE_LINES][256] = { "KEY USE: \nW/A/S/D/Space/Z : Move Main Cam \nZoom in/out : Wheel \nRotation Mode: R\n    Choose Rotate Axis : X/Y/Z\n    Rotate By Chosen Axis : Mouse left/right click\nDynamic Cam : M\nClear to Main cam: p\nOrthoProjection: 1\nChange XYZ - UNV : L\n"  };
+
+	
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
@@ -734,5 +1274,6 @@ void main(int argc, char *argv[]) {
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	init_camera_axis();
+	Init_route();
 	glutMainLoop();
 }

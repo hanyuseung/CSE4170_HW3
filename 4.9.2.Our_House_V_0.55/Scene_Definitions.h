@@ -195,7 +195,7 @@ struct Dynamic_Object { // an object that moves
 		object_frames.clear();
 	}
 
-	void draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix, SHADER_ID shader_kind,
+	void draw_object(glm::mat4& MM, glm::mat4& ViewMatrix, glm::mat4& ProjectionMatrix, SHADER_ID shader_kind,
 		std::vector<std::reference_wrapper<Shader>>& shader_list, int time_stamp);
 };
 
@@ -263,14 +263,20 @@ struct Scene {
 	std::vector<Axis_Object> CC_axis_object;
 	std::vector<glm::mat4> CCAxisModelMatrixes;
 
+	// This for dynamic MM
+	std::vector<glm::mat4> DynamicModelMatrixes;
+
 	Scene() {
 		time_stamp = 0;
 		axistoggle = false;
 		static_objects.clear();
 		shader_list.clear();
+		CC_axis_object.clear();
+		DynamicModelMatrixes.clear();
+		CCAxisModelMatrixes.clear();
 		shader_kind = SHADER_SIMPLE;
 		ViewMatrix = ProjectionMatrix = glm::mat4(1.0f);
-		// Cam id 5°³
+		AxisMatrix = glm::mat4(1.0f);
 	}
 
 	void clock(int clock_id);
