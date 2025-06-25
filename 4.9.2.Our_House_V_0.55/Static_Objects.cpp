@@ -9,7 +9,7 @@
 
 
 #include "Scene_Definitions.h"
-#include "My_Shading.h"
+//#include "My_Shading.h"
 
 void Static_Object::read_geometry(int bytes_per_primitive) {
 	FILE* fp;
@@ -427,7 +427,7 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 	for (int i = 0; i < instances.size(); i++) {
 		ModelViewProjectionMatrix = ProjectionMatrix * ViewMatrix * instances[i].ModelMatrix;
 		switch (shader_kind) {
-		case SHADER_SIMPLE:
+		case SHADER_SIMPLE: {
 			Shader_Simple* shader_simple_ptr = static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[shader_kind]].get());
 			glUseProgram(shader_simple_ptr->h_ShaderProgram);
 			glUniformMatrix4fv(shader_simple_ptr->loc_ModelViewProjectionMatrix, 1, GL_FALSE,
@@ -435,6 +435,41 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 			glUniform3f(shader_simple_ptr->loc_primitive_color, instances[i].material.diffuse.r,
 				instances[i].material.diffuse.g, instances[i].material.diffuse.b);
 			break;
+		}
+		case SHADER_PHONG: {
+			Shader_Phong* sp = static_cast<Shader_Phong*>(&shader_list[shader_ID_mapper[shader_kind]].get());
+			glUseProgram(sp->h_ShaderProgram);
+
+			glUniformMatrix4fv(sp->loc_uModel, 1, GL_FALSE, &instances[i].ModelMatrix[0][0]);
+			glUniformMatrix4fv(sp->loc_uView, 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(sp->loc_uProjection, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+			glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(instances[i].ModelMatrix)));
+			glUniformMatrix3fv(sp->loc_uNormalMatrix, 1, GL_FALSE, &normalMat[0][0]);
+
+			glm::vec3 viewPos = glm::vec3(glm::inverse(ViewMatrix)[3]);
+			glUniform3fv(sp->loc_uViewPos, 1, &viewPos[0]);
+
+			// in scene def .cpp
+			extern Light_Parameters worldLight;
+			glUniform1i(sp->loc_light_on, worldLight.light_on);
+			glUniform4fv(sp->loc_light_pos, 1, worldLight.position);
+			glUniform4fv(sp->loc_light_ambient, 1, worldLight.ambient_color);
+			glUniform4fv(sp->loc_light_diffuse, 1, worldLight.diffuse_color);
+			glUniform4fv(sp->loc_light_specular, 1, worldLight.specular_color);
+			glUniform3fv(sp->loc_spot_direction, 1, worldLight.spot_direction);
+			glUniform1f(sp->loc_spot_exponent, worldLight.spot_exponent);
+			glUniform1f(sp->loc_spot_cutoff_angle, worldLight.spot_cutoff_angle);
+			glUniform4fv(sp->loc_light_attenuation, 1, worldLight.light_attenuation_factors);
+
+			const Material& M = instances[i].material;
+			glUniform4fv(sp->loc_mat_ambient, 1, &M.ambient[0]);
+			glUniform4fv(sp->loc_mat_diffuse, 1, &M.diffuse[0]);
+			glUniform4fv(sp->loc_mat_specular, 1, &M.specular[0]);
+			glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(sp->loc_spot_exponent, M.exponent);
+			break;
+			}
 		}
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3 * n_triangles);

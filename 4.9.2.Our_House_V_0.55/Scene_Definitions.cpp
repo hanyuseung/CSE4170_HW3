@@ -8,6 +8,19 @@ unsigned int dynamic_object_ID_mapper[N_MAX_DYNAMIC_OBJECTS];
 unsigned int camera_ID_mapper[N_MAX_CAMERAS];
 unsigned int shader_ID_mapper[N_MAX_SHADERS];
 
+// 추가
+Light_Parameters worldLight = {
+	1, // light on
+	{0.0f, 0.0f, 200.0f, 1.0f}, // position
+	{0.6f, 0.6f, 0.06f, 1.0f}, // ambient_color
+	{0.6f, 0.6f, 0.6f, 1.0f}, // diffuse color
+	{0.6f, 0.6f, 0.6f, 1.0f}, // specular color
+	{0.0f, 0.0f, -1.0f}, // spot direction
+	2.0f, // spot exponent
+	30.0f, // spot cutoff
+	{1.0f, 1.0f, 1.0f, 0.0f} // attenuation
+};
+
 void Axis_Object::define_axis() {
 	glGenBuffers(1, &VBO);
 
@@ -196,6 +209,11 @@ void Scene::build_shader_list() {
 	shader_data.shader_simple.prepare_shader();
 	shader_ID_mapper[SHADER_SIMPLE] = shader_list.size();
 	shader_list.push_back(shader_data.shader_simple);
+
+	// 추가
+	shader_data.shader_phong.prepare_shader();
+	shader_ID_mapper[SHADER_PHONG] = shader_list.size();
+	shader_list.push_back(shader_data.shader_phong);
 }
 
 void Scene::initialize() {

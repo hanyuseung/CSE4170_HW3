@@ -9,6 +9,7 @@
 #include "Shaders/LoadShaders.h"
 #include "Camera.h"
 
+
 #define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
 #define TO_RADIAN 0.01745329252f  
 #define TO_DEGREE 57.295779513f
@@ -22,6 +23,40 @@ extern unsigned int static_object_ID_mapper[N_MAX_STATIC_OBJECTS];
 extern unsigned int dynamic_object_ID_mapper[N_MAX_DYNAMIC_OBJECTS];
 extern unsigned int camera_ID_mapper[N_MAX_CAMERAS];
 extern unsigned int shader_ID_mapper[N_MAX_SHADERS];
+
+typedef struct _Light_Parameters {
+	int light_on;
+	float position[4];
+	float ambient_color[4], diffuse_color[4], specular_color[4];
+	float spot_direction[3];
+	float spot_exponent;
+	float spot_cutoff_angle;
+	float light_attenuation_factors[4]; // produce this effect only if .w != 0.0f
+} Light_Parameters;
+
+typedef struct _loc_LIGHT_Parameters {
+	GLint light_on;
+	GLint position;
+	GLint ambient_color, diffuse_color, specular_color;
+	GLint spot_direction;
+	GLint spot_exponent;
+	GLint spot_cutoff_angle;
+	GLint light_attenuation_factors;
+} loc_light_Parameters;
+
+typedef struct _Material_Parameters {
+	float ambient_color[4], diffuse_color[4], specular_color[4], emissive_color[4];
+	float specular_exponent;
+} Material_Parameters;
+
+typedef struct _loc_Material_Parameters {
+	GLint ambient_color, diffuse_color, specular_color, emissive_color;
+	GLint specular_exponent;
+} loc_Material_Parameters;
+
+extern Light_Parameters worldLight;
+
+
 
 enum STATIC_OBJECT_ID {
 	STATIC_OBJECT_BUILDING = 0, STATIC_OBJECT_TABLE, STATIC_OBJECT_LIGHT, 
@@ -55,9 +90,35 @@ struct Shader_Simple : Shader {
 	void prepare_shader();
 };
 
+// 추가
+struct Shader_Phong : Shader {
+	// matrix uniforms
+	GLint loc_uModel, loc_uView, loc_uProjection, loc_uNormalMatrix;
+	// camera
+	GLint loc_uViewPos;
+	// light parameters
+	GLint loc_light_on;
+	GLint loc_light_pos;
+	GLint loc_light_ambient;
+	GLint loc_light_diffuse;
+	GLint loc_light_specular;
+	GLint loc_spot_direction;
+	GLint loc_spot_exponent;
+	GLint loc_spot_cutoff_angle;
+	GLint loc_light_attenuation;
+	// material parameters
+	GLint loc_mat_ambient;
+	GLint loc_mat_diffuse;
+	GLint loc_mat_specular;
+	GLint loc_mat_emissive;
+	GLint loc_mat_shininess;
+	void prepare_shader();
+};
+
 struct Shader_Data {
 	Shader_Simple shader_simple;
-	// Shader_Phong shader_phong;
+	// 추가
+	Shader_Phong shader_phong;
 	// Shader_Phong_Texture Shader_Phong_texture;
 };
 

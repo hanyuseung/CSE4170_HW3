@@ -6,7 +6,6 @@
 #include <GL/freeglut.h>
 #include "Shaders/LoadShaders.h"
 #include "Scene_Definitions.h"
-#include "My_Shading.h"
 #include <random>
 
 using namespace glm;
@@ -825,6 +824,13 @@ void keyboardDown(unsigned char key, int x, int y) {
 	case 27: // ESC key
 		glutLeaveMainLoop(); // Incur destuction callback for cleanups.
 		break;
+	case '1':
+		scene.shader_kind = SHADER_SIMPLE;
+		break;
+	case '2':
+		scene.shader_kind = SHADER_PHONG;
+		break;
+
 	case 'c':
 		flag_cull_face = (flag_cull_face + 1) % 3;
 		switch (flag_cull_face) {
@@ -859,7 +865,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 		}
 		glutPostRedisplay();
 		break;
-	case '2':
+	case '[':
 		depth_test_on = 1 - depth_test_on;
 		if (depth_test_on) {
 			glEnable(GL_DEPTH_TEST);
@@ -1000,7 +1006,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 		}
 		
 		break;
-	case '1':
+	case ']':
 		// Show orthogonal Cam on CCTV window.
 		fprintf(stdout, "Show orthogonal XYZ Cam.\n");
 		if(!flag.Camera_Ortho){
