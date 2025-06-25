@@ -6,7 +6,7 @@ in vec3 v_normal;
 
 out vec4 fragColor;
 
-// Light and material definitions (match My_Shading.h) fileciteturn5file1
+
 struct Light_Parameters {
     int light_on;
     vec4 position;

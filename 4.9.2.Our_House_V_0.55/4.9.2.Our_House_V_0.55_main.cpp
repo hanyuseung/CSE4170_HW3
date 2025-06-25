@@ -61,6 +61,8 @@ void mouseWheel(int wheel, int direction, int x, int y);
 void init_BenRoute();
 
 
+
+
 void centerMouse() {
 	int centerX = scene.window.width / 2;
 	int centerY = scene.window.height / 2;
@@ -655,6 +657,13 @@ void update_main_cam_axis(Camera &camera) {
 	camera.cam_view.uaxis = vec3(R[0]);
 	camera.cam_view.vaxis = vec3(R[1]);
 	camera.cam_view.naxis = vec3(R[2]);
+	// 1 is EC light.
+	lightList[1].position[0] = pos.x;
+	lightList[1].position[1] = pos.y;
+	lightList[1].position[2] = pos.z;
+	lightList[1].spot_direction[0] = -R[0][0];
+	lightList[1].spot_direction[1] = -R[0][1];
+	lightList[1].spot_direction[2] = -R[0][2];
 	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
 	scene.CCAxisModelMatrixes[0] = R;
 }
@@ -766,46 +775,13 @@ void display(void) {
 			vec3 updown = normalize(new_vaxis);
 			updown.x = updown.y = 0.0f;
 			update_dynamic_cam_axis(*camera);
-
-
-			// Dynamic CCTV는 고정되어 있어야 한다는 걸 알은 나: ㄱ-
-			//for (int i = 0; i < 6; i++) {
-			//	if (flag.camera_wasd[i]) {
-			//		
-			//		vec3 movement(0.0f);
-			//		switch (i) {
-			//		// 바라보고 있는 방향으로 움직이려면? n axis normalize해서 가중.
-			//		case 0: // w
-			//			movement = front * 100.0f * DT;
-			//			break;
-			//		// 바로보고 있는 방향 옆으로 움직이기: u axis normalize 해서 가중.
-			//		case 3: // d
-			//			movement = side * 100.0f * DT;
-			//			break;
-			//		case 2: // s
-			//			movement = -front * 100.0f * DT;
-			//			break;
-			//		case 1: // a
-			//			movement = -side * 100.0f * DT;
-			//			break;
-			//		case 4: // ' '
-			//			movement = updown * 100.0f * DT;
-			//			break;
-			//		case 5: // z
-			//			movement = -updown * 100.0f * DT;
-			//			break;
-			//		}
-			//		mat4 newmat = translate(mat4(1.0f), -movement);
-			//		camera->get().ViewMatrix = camera->get().ViewMatrix * newmat;
-			//		update_dynamic_cam_axis(*camera);
-			//	}
-			//}
 			
 		}
 
 		glViewport(camera->get().view_port.x, camera->get().view_port.y,
 			camera->get().view_port.w, camera->get().view_port.h);
 		scene.ViewMatrix = camera->get().ViewMatrix;
+
 		scene.ProjectionMatrix = camera->get().ProjectionMatrix;
 		int s = FullRoute.size();
 		//int ss = SpiderRoute.size();
@@ -830,6 +806,14 @@ void keyboardDown(unsigned char key, int x, int y) {
 	case '2':
 		scene.shader_kind = SHADER_PHONG;
 		break;
+	case '3':
+		worldLight.light_on = 1- worldLight.light_on;
+		//printf("%d\n", worldLight.light_on);
+		break;
+	case '4':
+		eyeLight = !eyeLight;
+		break;
+
 
 	case 'c':
 		flag_cull_face = (flag_cull_face + 1) % 3;

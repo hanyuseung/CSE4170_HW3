@@ -10,6 +10,7 @@
 #include "Camera.h"
 
 
+
 #define BUFFER_OFFSET(offset) ((GLvoid *) (offset))
 #define TO_RADIAN 0.01745329252f  
 #define TO_DEGREE 57.295779513f
@@ -55,6 +56,10 @@ typedef struct _loc_Material_Parameters {
 } loc_Material_Parameters;
 
 extern Light_Parameters worldLight;
+extern Light_Parameters lightEC;
+
+extern bool eyeLight;
+extern std::vector <Light_Parameters> lightList;
 
 
 
@@ -317,6 +322,8 @@ struct Scene {
 
 	// New
 	glm::mat4 AxisMatrix; //= glm::mat4(1.0f);
+
+	
 
 	Axis_Object axis_object;
 

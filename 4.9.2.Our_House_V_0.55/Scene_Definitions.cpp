@@ -10,16 +10,72 @@ unsigned int shader_ID_mapper[N_MAX_SHADERS];
 
 // 추가
 Light_Parameters worldLight = {
-	1, // light on
-	{0.0f, 0.0f, 200.0f, 1.0f}, // position
-	{0.6f, 0.6f, 0.06f, 1.0f}, // ambient_color
-	{0.6f, 0.6f, 0.6f, 1.0f}, // diffuse color
-	{0.6f, 0.6f, 0.6f, 1.0f}, // specular color
-	{0.0f, 0.0f, -1.0f}, // spot direction
-	2.0f, // spot exponent
-	30.0f, // spot cutoff
-	{1.0f, 1.0f, 1.0f, 0.0f} // attenuation
+	1,                                        // light on
+	{0.0f, 0.0f, 100.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	3.0f,                                     // spot_exponent (집중도)
+	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
 };
+
+Light_Parameters lightEC = {
+	1,                                        // light on
+	{0.0f, 0.0f, 100.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	3.0f,                                     // spot_exponent (집중도)
+	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+};
+bool eyeLight = { false };
+
+
+void initLights() {
+	lightList.clear();
+	Light_Parameters world = {
+	1,                                        // light on
+	{0.0f, 0.0f, 100.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	3.0f,                                     // spot_exponent (집중도)
+	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	};
+	lightList.push_back(world);
+
+	Light_Parameters eye = {
+	1,                                        // light on
+	{0.0f, 0.0f, 100.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	3.0f,                                     // spot_exponent (집중도)
+	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	};
+	lightList.push_back(eye);
+
+	Light_Parameters model = {
+	1,                                        // light on
+	{0.0f, 0.0f, 100.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
+	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	3.0f,                                     // spot_exponent (집중도)
+	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	};
+	lightList.push_back(model);
+}
 
 void Axis_Object::define_axis() {
 	glGenBuffers(1, &VBO);
@@ -252,7 +308,6 @@ void Scene::draw_axis() {
 	if (axistoggle) {
 		axis_object.draw_axis(AxisMatrix, static_cast<Shader_Simple*>(&shader_list[shader_ID_mapper[SHADER_SIMPLE]].get()),
 			ViewMatrix, ProjectionMatrix);
-
 	}
 
 	// This is for cctv unv Axis.

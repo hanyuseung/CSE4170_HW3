@@ -247,8 +247,20 @@ void Dynamic_Object::draw_object(glm::mat4&MM, glm::mat4& ViewMatrix, glm::mat4&
 
 			// in scene def .cpp
 			extern Light_Parameters worldLight;
+			extern Light_Parameters lightEC;
+			glm::vec4 lightposWC;
+			glm::vec4 posEC;
 			glUniform1i(sp->loc_light_on, worldLight.light_on);
-			glUniform4fv(sp->loc_light_pos, 1, worldLight.position);
+			if (eyeLight) {
+				posEC = glm::vec4(lightEC.position[0], lightEC.position[1],
+					lightEC.position[2], lightEC.position[3]);;
+				glUniform4fv(sp->loc_light_pos, 1, &posEC[0]);
+			}
+			else {
+				lightposWC = glm::vec4(worldLight.position[0], worldLight.position[1],
+					worldLight.position[2], worldLight.position[3]);
+				glUniform4fv(sp->loc_light_pos, 1, &lightposWC[0]);
+			}
 			glUniform4fv(sp->loc_light_ambient, 1, worldLight.ambient_color);
 			glUniform4fv(sp->loc_light_diffuse, 1, worldLight.diffuse_color);
 			glUniform4fv(sp->loc_light_specular, 1, worldLight.specular_color);
@@ -262,7 +274,7 @@ void Dynamic_Object::draw_object(glm::mat4&MM, glm::mat4& ViewMatrix, glm::mat4&
 			glUniform4fv(sp->loc_mat_diffuse, 1, &M.diffuse[0]);
 			glUniform4fv(sp->loc_mat_specular, 1, &M.specular[0]);
 			glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
-			glUniform1f(sp->loc_spot_exponent, M.exponent);
+			glUniform1f(sp->loc_mat_shininess, M.exponent);
 			break;
 			}
 		}

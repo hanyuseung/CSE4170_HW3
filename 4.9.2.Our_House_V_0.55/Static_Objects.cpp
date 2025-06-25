@@ -53,8 +53,20 @@ void Static_Object::prepare_geom_of_static_object() {
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	// position
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(0);
+
+	// normal
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// texture
+	/*if (n_fields >= 8) {
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(6 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+	}*/
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -452,8 +464,26 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 
 			// in scene def .cpp
 			extern Light_Parameters worldLight;
+			extern Light_Parameters lightEC;
+			extern std::vector<Light_Parameters> lightList;
+			//printf("%f %f %f \n", worldLight.position[0], worldLight.position[1], worldLight.position[2]);
 			glUniform1i(sp->loc_light_on, worldLight.light_on);
-			glUniform4fv(sp->loc_light_pos, 1, worldLight.position);
+
+			extern bool eyeLight;
+			glm::vec4 lightposWC;
+			glm::vec4 posEC;
+			if (eyeLight) {
+				posEC = glm::vec4(lightEC.position[0], lightEC.position[1],
+					lightEC.position[2], lightEC.position[3]);;
+				glUniform4fv(sp->loc_light_pos, 1, &posEC[0]);
+			}
+			else {
+				lightposWC = glm::vec4(worldLight.position[0], worldLight.position[1],
+					worldLight.position[2], worldLight.position[3]);
+				glUniform4fv(sp->loc_light_pos, 1, &lightposWC[0]);
+			}
+			
+			
 			glUniform4fv(sp->loc_light_ambient, 1, worldLight.ambient_color);
 			glUniform4fv(sp->loc_light_diffuse, 1, worldLight.diffuse_color);
 			glUniform4fv(sp->loc_light_specular, 1, worldLight.specular_color);
@@ -467,7 +497,7 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 			glUniform4fv(sp->loc_mat_diffuse, 1, &M.diffuse[0]);
 			glUniform4fv(sp->loc_mat_specular, 1, &M.specular[0]);
 			glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
-			glUniform1f(sp->loc_spot_exponent, M.exponent);
+			glUniform1f(sp->loc_mat_shininess, M.exponent);
 			break;
 			}
 		}
