@@ -1,20 +1,20 @@
 // Phong.vert
 #version 330 core
 
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec3 a_normal;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
 
-uniform mat4 u_model;
-uniform mat4 u_view;
-uniform mat4 u_projection;
-uniform mat3 u_normalMatrix;
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform mat3 uNormalMatrix;
 
-out vec3 v_fragPos;
-out vec3 v_normal;
+out vec3 FragPos;
+out vec3 Normal;
 
 void main() {
-    vec4 worldPos = u_model * vec4(a_position, 1.0);
-    v_fragPos = worldPos.xyz;
-    v_normal = normalize(u_normalMatrix * a_normal);
-    gl_Position = u_projection * u_view * worldPos;
+    vec4 worldPos = uModel * vec4(aPos, 1.0);
+    FragPos = worldPos.xyz;
+    Normal = normalize(uNormalMatrix * aNormal);
+    gl_Position = uProjection * uView * worldPos;
 }

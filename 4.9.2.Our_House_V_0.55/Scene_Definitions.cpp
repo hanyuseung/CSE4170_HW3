@@ -8,73 +8,63 @@ unsigned int dynamic_object_ID_mapper[N_MAX_DYNAMIC_OBJECTS];
 unsigned int camera_ID_mapper[N_MAX_CAMERAS];
 unsigned int shader_ID_mapper[N_MAX_SHADERS];
 
+bool fuckcat = false;
+
+std::vector<Light_Parameters> lightList;
 // 추가
-Light_Parameters worldLight = {
-	1,                                        // light on
-	{0.0f, 0.0f, 100.0f, 1.0f},               // position
-	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
-	{0.0f, 0.0f, -1.0f},                      // spot_direction
-	3.0f,                                     // spot_exponent (집중도)
-	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
-	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
-};
-
-Light_Parameters lightEC = {
-	1,                                        // light on
-	{0.0f, 0.0f, 100.0f, 1.0f},               // position
-	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
-	{0.0f, 0.0f, -1.0f},                      // spot_direction
-	3.0f,                                     // spot_exponent (집중도)
-	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
-	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
-};
-bool eyeLight = { false };
-
-
 void initLights() {
 	lightList.clear();
 	Light_Parameters world = {
 	1,                                        // light on
 	{0.0f, 0.0f, 100.0f, 1.0f},               // position
-	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.1f, 0.1f, 1.0f},                 // ambient_color 
+	{0.0f, 1.0f, 1.0f, 1.0f},                 // diffuse_color 
+	{0.0f, 1.0f, 1.0f, 1.0f},                 // specular_color 
 	{0.0f, 0.0f, -1.0f},                      // spot_direction
-	3.0f,                                     // spot_exponent (집중도)
-	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
-	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	0.0f,                                     // spot_exponent (집중도)
+	180.0f * TO_RADIAN,                       // spot_cutoff_angle (각도)
+	{1.0f, 0.0f, 0.0f}                  // attenuation (constant만 사용)
 	};
 	lightList.push_back(world);
 
 	Light_Parameters eye = {
-	1,                                        // light on
+	0,                                        // light on
 	{0.0f, 0.0f, 100.0f, 1.0f},               // position
 	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{0.9f, 0.9f, 0.9f, 1.0f},                 // diffuse_color (white)
+	{0.9f, 0.9f, 0.9f, 1.0f},                 // specular_color (white)
 	{0.0f, 0.0f, -1.0f},                      // spot_direction
 	3.0f,                                     // spot_exponent (집중도)
 	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
-	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	{1.0f, 0.005f, 0.0f}                  // attenuation (constant만 사용)
 	};
 	lightList.push_back(eye);
 
 	Light_Parameters model = {
-	1,                                        // light on
+	1,                                        // light off
 	{0.0f, 0.0f, 100.0f, 1.0f},               // position
 	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // diffuse_color (white)
-	{0.7f, 0.7f, 0.7f, 1.0f},                 // specular_color (white)
+	{1.0f, 0.1f, 0.1f, 1.0f},                 // diffuse_color (white)
+	{1.0f, 0.1f, 0.1f, 1.0f},                 // specular_color (white)
 	{0.0f, 0.0f, -1.0f},                      // spot_direction
-	3.0f,                                     // spot_exponent (집중도)
-	30.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
-	{1.0f, 1.0f, 1.0f, 0.0f}                  // attenuation (constant만 사용)
+	4.0f,                                     // spot_exponent (집중도)
+	40.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 0.0f, 0.0f}                  // attenuation (constant만 사용)
 	};
 	lightList.push_back(model);
+
+	Light_Parameters comp = {
+	0,                                        // light off
+	{-35.0f, -55.0f, 110.0f, 1.0f},               // position
+	{0.1f, 0.1f, 0.1f, 1.0f},                 // ambient_color (white)
+	{0.9f, 0.9f, 0.9f, 1.0f},                 // diffuse_color (white)
+	{1.0f, 1.0f, 1.0f, 1.0f},                 // specular_color (white)
+	{0.0f, 0.0f, -1.0f},                      // spot_direction
+	2.0f,                                     // spot_exponent (집중도)
+	40.0f * TO_RADIAN,                         // spot_cutoff_angle (각도)
+	{1.0f, 0.005f, 0.0f}                  // attenuation (constant만 사용)
+	};
+	lightList.push_back(comp);
 }
 
 void Axis_Object::define_axis() {
@@ -270,6 +260,16 @@ void Scene::build_shader_list() {
 	shader_data.shader_phong.prepare_shader();
 	shader_ID_mapper[SHADER_PHONG] = shader_list.size();
 	shader_list.push_back(shader_data.shader_phong);
+
+	shader_data.shader_gouraud.prepare_shader();
+	shader_ID_mapper[SHADER_GOURAUD] = shader_list.size();
+	shader_list.push_back(shader_data.shader_gouraud);
+
+	shader_data.shader_phong_texture.prepare_shader();
+	shader_ID_mapper[SHADER_PHONG_TEXTURE] = shader_list.size();
+	shader_list.push_back(shader_data.shader_phong_texture);
+
+	initLights();
 }
 
 void Scene::initialize() {

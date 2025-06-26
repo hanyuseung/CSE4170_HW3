@@ -9,7 +9,34 @@
 
 
 #include "Scene_Definitions.h"
-//#include "My_Shading.h"
+
+
+GLuint createWhiteTexture() {
+	GLuint whiteTexID;
+	glGenTextures(1, &whiteTexID);
+	glBindTexture(GL_TEXTURE_2D, whiteTexID);
+
+	// 1×1 흰색(RGBA = 255,255,255,255) 픽셀 데이터
+	unsigned char whitePixel[4] = { 255, 255, 255, 255 };
+	glTexImage2D(
+		GL_TEXTURE_2D,
+		0,                // level
+		GL_RGBA,          // internal format
+		1, 1,             // width, height
+		0,                // border
+		GL_RGBA,          // format
+		GL_UNSIGNED_BYTE, // type
+		whitePixel        // data
+	);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	return whiteTexID;
+}
+
+
+
 
 void Static_Object::read_geometry(int bytes_per_primitive) {
 	FILE* fp;
@@ -63,10 +90,9 @@ void Static_Object::prepare_geom_of_static_object() {
 	glEnableVertexAttribArray(1);
 
 	// texture
-	/*if (n_fields >= 8) {
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(6 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-	}*/
+	// 텍스쳐 추가- 삭제 가능
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, n_bytes_per_vertex, BUFFER_OFFSET(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -356,6 +382,23 @@ void Helicopter::define_object() {
 	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
 	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
 	cur_material->exponent = 0.21794872f * 0.6f;
+
+
+	instances.emplace_back();
+	cur_MM = &(instances.back().ModelMatrix);
+	*cur_MM = glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, -50.0f, 70.0f));
+	*cur_MM = glm::scale(*cur_MM, glm::vec3(3.0f));
+	*cur_MM = glm::rotate(*cur_MM, -90.0f * TO_RADIAN, glm::vec3(0.0f, 0.0f, 1.0f));
+	*cur_MM = glm::rotate(*cur_MM, -20.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+
+	//*cur_MM = glm::rotate(*cur_MM, 90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+	cur_material = &(instances.back().material);
+	cur_material->emission = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	cur_material->ambient = glm::vec4(0.1745f, 0.01175f, 0.01175f, 1.0f);
+	cur_material->diffuse = glm::vec4(0.61424f, 0.04136f, 0.04136f, 1.0f);
+	cur_material->specular = glm::vec4(0.727811f, 0.626959f, 0.626959f, 1.0f);
+	cur_material->exponent = 76.8f;
+
 }
 
 void Cat::define_object() {
@@ -379,6 +422,29 @@ void Cat::define_object() {
 	cur_material->diffuse = glm::vec4(0.780392f, 0.568627f, 0.113725f, 1.0f);
 	cur_material->specular = glm::vec4(0.992157f, 0.941176f, 0.807843f, 1.0f);
 	cur_material->exponent = 0.21794872f * 0.6f;
+
+
+	// 텍스쳐 추가
+	FIBITMAP* bitmap = FreeImage_Load(
+		FreeImage_GetFileType("Data/static_objects/allook.png", 0),
+		"Data/static_objects/allook.png");
+	FIBITMAP* image = FreeImage_ConvertTo32Bits(bitmap);
+	int w = FreeImage_GetWidth(image);
+	int h = FreeImage_GetHeight(image);
+
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	// 기본 필터 (linear)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// 업로드 (BGRA -> RGBA 변환)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+		GL_BGRA, GL_UNSIGNED_BYTE, FreeImage_GetBits(image));
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	FreeImage_Unload(image);
+	FreeImage_Unload(bitmap);
 }
 
 
@@ -436,6 +502,32 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 	std::vector<std::reference_wrapper<Shader>>& shader_list) {
 	glm::mat4 ModelViewProjectionMatrix;
 	glFrontFace(front_face_mode);
+	extern std::vector<Light_Parameters> lightList;
+	// light 미리계산
+	int n = (int)lightList.size();
+	std::vector<int> lonArr(n);
+	std::vector<glm::vec4> posArr(n), ambArr(n), difArr(n), specArr(n);
+	std::vector<float> spotAngleArr(n), spotExpArr(n);
+	std::vector<glm::vec3> spotDirArr(n), attArr(n);
+	for (int j = 0; j < n; j++) {
+		auto& L = lightList[j];
+		lonArr[j] = L.light_on;
+
+		spotAngleArr[j] = L.spot_cutoff_angle;
+		spotDirArr[j] = glm::vec3(L.spot_direction[0], L.spot_direction[1], L.spot_direction[2]);
+		spotExpArr[j] = L.spot_exponent;
+
+		attArr[j] = glm::vec3(L.light_attenuation_factors[0], L.light_attenuation_factors[1], L.light_attenuation_factors[2]);
+
+		glm::vec4 posWC = glm::vec4(L.position[0], L.position[1], L.position[2], L.position[3]);
+		posArr[j] = posWC;
+
+		ambArr[j] = glm::vec4(L.ambient_color[0], L.ambient_color[1], L.ambient_color[2], L.ambient_color[3]);
+		difArr[j] = glm::vec4(L.diffuse_color[0], L.diffuse_color[1], L.diffuse_color[2], L.diffuse_color[3]);
+		specArr[j] = glm::vec4(L.specular_color[0], L.specular_color[1], L.specular_color[2], L.specular_color[3]);
+	}
+
+
 	for (int i = 0; i < instances.size(); i++) {
 		ModelViewProjectionMatrix = ProjectionMatrix * ViewMatrix * instances[i].ModelMatrix;
 		switch (shader_kind) {
@@ -463,43 +555,129 @@ void Static_Object::draw_object(glm::mat4& ViewMatrix, glm::mat4& ProjectionMatr
 			glUniform3fv(sp->loc_uViewPos, 1, &viewPos[0]);
 
 			// in scene def .cpp
-			extern Light_Parameters worldLight;
-			extern Light_Parameters lightEC;
-			extern std::vector<Light_Parameters> lightList;
-			//printf("%f %f %f \n", worldLight.position[0], worldLight.position[1], worldLight.position[2]);
-			glUniform1i(sp->loc_light_on, worldLight.light_on);
+			
+			glUniform1i(sp->loc_uNumLights, n);
+			glUniform1iv(sp->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(sp->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(sp->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(sp->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(sp->loc_uLightSpecular, n, &specArr[0][0]);
 
-			extern bool eyeLight;
-			glm::vec4 lightposWC;
-			glm::vec4 posEC;
-			if (eyeLight) {
-				posEC = glm::vec4(lightEC.position[0], lightEC.position[1],
-					lightEC.position[2], lightEC.position[3]);;
-				glUniform4fv(sp->loc_light_pos, 1, &posEC[0]);
-			}
-			else {
-				lightposWC = glm::vec4(worldLight.position[0], worldLight.position[1],
-					worldLight.position[2], worldLight.position[3]);
-				glUniform4fv(sp->loc_light_pos, 1, &lightposWC[0]);
-			}
-			
-			
-			glUniform4fv(sp->loc_light_ambient, 1, worldLight.ambient_color);
-			glUniform4fv(sp->loc_light_diffuse, 1, worldLight.diffuse_color);
-			glUniform4fv(sp->loc_light_specular, 1, worldLight.specular_color);
-			glUniform3fv(sp->loc_spot_direction, 1, worldLight.spot_direction);
-			glUniform1f(sp->loc_spot_exponent, worldLight.spot_exponent);
-			glUniform1f(sp->loc_spot_cutoff_angle, worldLight.spot_cutoff_angle);
-			glUniform4fv(sp->loc_light_attenuation, 1, worldLight.light_attenuation_factors);
+			//spot
+			glUniform1fv(sp->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(sp->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(sp->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(sp->loc_uAttenuation, n, &attArr[0][0]);
+
 
 			const Material& M = instances[i].material;
-			glUniform4fv(sp->loc_mat_ambient, 1, &M.ambient[0]);
-			glUniform4fv(sp->loc_mat_diffuse, 1, &M.diffuse[0]);
-			glUniform4fv(sp->loc_mat_specular, 1, &M.specular[0]);
-			glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
-			glUniform1f(sp->loc_mat_shininess, M.exponent);
+			glUniform4fv(sp->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(sp->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(sp->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(sp->loc_uMatShininess, M.exponent);
 			break;
 			}
+		case SHADER_GOURAUD: {
+			Shader_Gouraud* sg = static_cast<Shader_Gouraud*>(&shader_list[shader_ID_mapper[shader_kind]].get());
+			glUseProgram(sg->h_ShaderProgram);
+
+			glUniformMatrix4fv(sg->loc_uModel, 1, GL_FALSE, &instances[i].ModelMatrix[0][0]);
+			glUniformMatrix4fv(sg->loc_uView, 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(sg->loc_uProjection, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+			glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(instances[i].ModelMatrix)));
+			glUniformMatrix3fv(sg->loc_uNormalMatrix, 1, GL_FALSE, &normalMat[0][0]);
+			
+			glm::vec3 viewPos = glm::vec3(glm::inverse(ViewMatrix)[3]);
+			glUniform3fv(sg->loc_uViewPos, 1, &viewPos[0]);
+
+			// in scene def .cpp
+
+			glUniform1i(sg->loc_uNumLights, n);
+			glUniform1iv(sg->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(sg->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(sg->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(sg->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(sg->loc_uLightSpecular, n, &specArr[0][0]);
+
+			//spot
+			glUniform1fv(sg->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(sg->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(sg->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(sg->loc_uAttenuation, n, &attArr[0][0]);
+
+
+			const Material& M = instances[i].material;
+			glUniform4fv(sg->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(sg->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(sg->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(sg->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(sg->loc_uMatShininess, M.exponent);
+			break;
+			}
+
+	// 안되면 지우자.
+		case SHADER_PHONG_TEXTURE: {
+			Shader_Phong_Texture* spt = static_cast<Shader_Phong_Texture*>(&shader_list[shader_ID_mapper[shader_kind]].get());
+			glUseProgram(spt->h_ShaderProgram);
+
+			glUniformMatrix4fv(spt->loc_uModel, 1, GL_FALSE, &instances[i].ModelMatrix[0][0]);
+			glUniformMatrix4fv(spt->loc_uView, 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(spt->loc_uProjection, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+			glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(instances[i].ModelMatrix)));
+			glUniformMatrix3fv(spt->loc_uNormalMatrix, 1, GL_FALSE, &normalMat[0][0]);
+
+			glm::vec3 viewPos = glm::vec3(glm::inverse(ViewMatrix)[3]);
+			glUniform3fv(spt->loc_uViewPos, 1, &viewPos[0]);
+
+			// in scene def .cpp
+
+			glUniform1i(spt->loc_uNumLights, n);
+			glUniform1iv(spt->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(spt->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(spt->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(spt->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(spt->loc_uLightSpecular, n, &specArr[0][0]);
+
+			//spot
+			glUniform1fv(spt->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(spt->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(spt->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(spt->loc_uAttenuation, n, &attArr[0][0]);
+
+
+			const Material& M = instances[i].material;
+			glUniform4fv(spt->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(spt->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(spt->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(spt->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(spt->loc_uMatShininess, M.exponent);
+
+			// bind the cat’s texture only if this object is a Cat
+			extern bool fuckcat;
+			GLuint tex = 0;
+			if (fuckcat && this->object_id == STATIC_OBJECT_CAT) {
+				// safe to cast because we know the ID
+				Cat* pCat = static_cast<Cat*>(this);
+				tex = pCat->texture_id;
+			}
+			else {
+				tex = createWhiteTexture();
+			}
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glUniform1i(spt->loc_uTexture, 0);
+
+			break;
+		}
 		}
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3 * n_triangles);

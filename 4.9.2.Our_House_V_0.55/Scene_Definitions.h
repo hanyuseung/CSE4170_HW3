@@ -32,7 +32,7 @@ typedef struct _Light_Parameters {
 	float spot_direction[3];
 	float spot_exponent;
 	float spot_cutoff_angle;
-	float light_attenuation_factors[4]; // produce this effect only if .w != 0.0f
+	float light_attenuation_factors[3]; // x=1, y=0 z=0 -> no att
 } Light_Parameters;
 
 typedef struct _loc_LIGHT_Parameters {
@@ -55,13 +55,10 @@ typedef struct _loc_Material_Parameters {
 	GLint specular_exponent;
 } loc_Material_Parameters;
 
-extern Light_Parameters worldLight;
-extern Light_Parameters lightEC;
 
-extern bool eyeLight;
 extern std::vector <Light_Parameters> lightList;
 
-
+extern bool fuckcat;
 
 enum STATIC_OBJECT_ID {
 	STATIC_OBJECT_BUILDING = 0, STATIC_OBJECT_TABLE, STATIC_OBJECT_LIGHT, 
@@ -75,7 +72,7 @@ enum DYNAMIC_OBJECT_ID {
 	,DYNAMIC_OBJECT_BEN, DYNAMIC_OBJECT_SPIDER,
 };
 
-enum SHADER_ID { SHADER_SIMPLE = 0, SHADER_PHONG, SHADER_PHONG_TEXUTRE };
+enum SHADER_ID { SHADER_SIMPLE = 0, SHADER_GOURAUD, SHADER_PHONG, SHADER_PHONG_TEXTURE };
 
 struct Shader {
 	ShaderInfo shader_info[3];
@@ -98,33 +95,123 @@ struct Shader_Simple : Shader {
 // 추가
 struct Shader_Phong : Shader {
 	// matrix uniforms
-	GLint loc_uModel, loc_uView, loc_uProjection, loc_uNormalMatrix;
+	GLint loc_uModel;
+	GLint loc_uView;
+	GLint loc_uProjection;
+	GLint loc_uNormalMatrix;
+
+	GLint loc_uLightOn;
 	// camera
 	GLint loc_uViewPos;
-	// light parameters
-	GLint loc_light_on;
-	GLint loc_light_pos;
-	GLint loc_light_ambient;
-	GLint loc_light_diffuse;
-	GLint loc_light_specular;
-	GLint loc_spot_direction;
-	GLint loc_spot_exponent;
-	GLint loc_spot_cutoff_angle;
-	GLint loc_light_attenuation;
-	// material parameters
-	GLint loc_mat_ambient;
-	GLint loc_mat_diffuse;
-	GLint loc_mat_specular;
-	GLint loc_mat_emissive;
-	GLint loc_mat_shininess;
+
+	// att
+	GLint loc_uAttenuation;
+
+	// multiple lights
+	GLint loc_uNumLights;      // uniform int   uNumLights;
+	GLint loc_uLightPos;       // uniform vec4  uLightPos[MAX_LIGHTS];
+	GLint loc_uLightAmbient;   // uniform vec4  uLightAmbient[MAX_LIGHTS];
+	GLint loc_uLightDiffuse;   // uniform vec4  uLightDiffuse[MAX_LIGHTS];
+	GLint loc_uLightSpecular;  // uniform vec4  uLightSpecular[MAX_LIGHTS];
+
+	// spotlight
+	GLint loc_uLightSpotDirection;
+	GLint loc_uLightSpotExponent;
+	GLint loc_uLightSpotCutoffAngle;
+
+	// material struct fields
+	GLint loc_uMatAmbient;     // uniform Material uMaterial; → uMaterial.ambient
+	GLint loc_uMatDiffuse;     // → uMaterial.diffuse
+	GLint loc_uMatSpecular;    // → uMaterial.specular
+	GLint loc_uMatShininess;   // → uMaterial.shininess
+
 	void prepare_shader();
 };
+
+struct Shader_Gouraud : Shader {
+	// matrix uniforms
+	GLint loc_uModel;
+	GLint loc_uView;
+	GLint loc_uProjection;
+	GLint loc_uNormalMatrix;
+
+	GLint loc_uLightOn;
+	// camera
+	GLint loc_uViewPos;
+
+	// att
+	GLint loc_uAttenuation;
+
+	// multiple lights
+	GLint loc_uNumLights;      // uniform int   uNumLights;
+	GLint loc_uLightPos;       // uniform vec4  uLightPos[MAX_LIGHTS];
+	GLint loc_uLightAmbient;   // uniform vec4  uLightAmbient[MAX_LIGHTS];
+	GLint loc_uLightDiffuse;   // uniform vec4  uLightDiffuse[MAX_LIGHTS];
+	GLint loc_uLightSpecular;  // uniform vec4  uLightSpecular[MAX_LIGHTS];
+
+	// spotlight
+	GLint loc_uLightSpotDirection;
+	GLint loc_uLightSpotExponent;
+	GLint loc_uLightSpotCutoffAngle;
+
+	// material struct fields
+	GLint loc_uMatAmbient;     // uniform Material uMaterial; → uMaterial.ambient
+	GLint loc_uMatDiffuse;     // → uMaterial.diffuse
+	GLint loc_uMatSpecular;    // → uMaterial.specular
+	GLint loc_uMatShininess;   // → uMaterial.shininess
+
+	void prepare_shader();
+};
+
+
+struct Shader_Phong_Texture : Shader {
+	// matrix uniforms
+	GLint loc_uModel;
+	GLint loc_uView;
+	GLint loc_uProjection;
+	GLint loc_uNormalMatrix;
+
+	// camera
+	GLint loc_uViewPos;
+
+	// attenuation
+	GLint loc_uAttenuation;
+
+	// multiple lights
+	GLint loc_uNumLights;
+	GLint loc_uLightOn;
+	GLint loc_uLightPos;
+	GLint loc_uLightAmbient;
+	GLint loc_uLightDiffuse;
+	GLint loc_uLightSpecular;
+
+	// spotlight
+	GLint loc_uLightSpotDirection;
+	GLint loc_uLightSpotExponent;
+	GLint loc_uLightSpotCutoffAngle;
+
+	// material struct fields
+	GLint loc_uMatAmbient;
+	GLint loc_uMatDiffuse;
+	GLint loc_uMatSpecular;
+	GLint loc_uMatShininess;
+
+	// texture sampler
+	GLint loc_uTexture;
+	void prepare_shader();
+};
+
+
 
 struct Shader_Data {
 	Shader_Simple shader_simple;
 	// 추가
 	Shader_Phong shader_phong;
+
+	Shader_Gouraud shader_gouraud;
 	// Shader_Phong_Texture Shader_Phong_texture;
+
+	Shader_Phong_Texture shader_phong_texture;
 };
 
 struct Material {
@@ -133,6 +220,7 @@ struct Material {
 };
 
 struct Instance {
+	//GLuint texture_id;
 	glm::mat4 ModelMatrix;
 	Material material;
 };
@@ -219,6 +307,7 @@ struct Helicopter : public Static_Object {
 };
 
 struct Cat : public Static_Object {
+	GLuint texture_id = 0;
 	Cat(STATIC_OBJECT_ID _object_id) : Static_Object(_object_id) {}
 	void define_object();
 };

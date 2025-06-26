@@ -22,34 +22,114 @@ void Shader_Phong::prepare_shader() {
     h_ShaderProgram = LoadShaders(shader_info);
     glUseProgram(h_ShaderProgram);
 
-    // 3) Grab all the uniform locations declared in Phong.vert / Phong.frag
-    //    (model, view, projection, normal matrix)
+    // 3) uniform --> fragsh.
+    loc_uModel = glGetUniformLocation(h_ShaderProgram, "uModel");
+    loc_uView = glGetUniformLocation(h_ShaderProgram, "uView");
+    loc_uProjection = glGetUniformLocation(h_ShaderProgram, "uProjection");
+    loc_uNormalMatrix = glGetUniformLocation(h_ShaderProgram, "uNormalMatrix");
+
+    loc_uLightOn = glGetUniformLocation(h_ShaderProgram, "uLightOn");
+    loc_uViewPos = glGetUniformLocation(h_ShaderProgram, "uViewPos");
+
+    loc_uAttenuation = glGetUniformLocation(h_ShaderProgram, "uAttenuation");
+
+    loc_uNumLights = glGetUniformLocation(h_ShaderProgram, "uNumLights");
+    loc_uLightPos = glGetUniformLocation(h_ShaderProgram, "uLightPos");
+    loc_uLightAmbient = glGetUniformLocation(h_ShaderProgram, "uLightAmbient");
+    loc_uLightDiffuse = glGetUniformLocation(h_ShaderProgram, "uLightDiffuse");
+    loc_uLightSpecular = glGetUniformLocation(h_ShaderProgram, "uLightSpecular");
+
+    loc_uLightSpotDirection = glGetUniformLocation(h_ShaderProgram, "uLightSpotDirection");
+    loc_uLightSpotExponent = glGetUniformLocation(h_ShaderProgram, "uLightSpotExponent");
+    loc_uLightSpotCutoffAngle = glGetUniformLocation(h_ShaderProgram, "uLightSpotCutoffAngle");
+
+
+    loc_uMatAmbient = glGetUniformLocation(h_ShaderProgram, "uMaterial.ambient");
+    loc_uMatDiffuse = glGetUniformLocation(h_ShaderProgram, "uMaterial.diffuse");
+    loc_uMatSpecular = glGetUniformLocation(h_ShaderProgram, "uMaterial.specular");
+    loc_uMatShininess = glGetUniformLocation(h_ShaderProgram, "uMaterial.shininess");
+
+    // 4) Unbind program until draw time
+    glUseProgram(0);
+}
+
+
+void Shader_Gouraud::prepare_shader() {
+    // 1) Specify the two shader stages and terminate array
+    shader_info[0] = { GL_VERTEX_SHADER,   "Shaders/Gouraud.vert" };
+    shader_info[1] = { GL_FRAGMENT_SHADER, "Shaders/Gouraud.frag" };
+    shader_info[2] = { GL_NONE, NULL };
+
+    // 2) Compile, link, and use the program
+    h_ShaderProgram = LoadShaders(shader_info);
+    glUseProgram(h_ShaderProgram);
+
+    // 3) uniform --> fragsh.
     loc_uModel = glGetUniformLocation(h_ShaderProgram, "u_model");
     loc_uView = glGetUniformLocation(h_ShaderProgram, "u_view");
     loc_uProjection = glGetUniformLocation(h_ShaderProgram, "u_projection");
     loc_uNormalMatrix = glGetUniformLocation(h_ShaderProgram, "u_normalMatrix");
-
-    //    camera position
     loc_uViewPos = glGetUniformLocation(h_ShaderProgram, "u_viewPos");
 
-    //    light parameters
-    loc_light_on = glGetUniformLocation(h_ShaderProgram, "u_light.light_on");
-    loc_light_pos = glGetUniformLocation(h_ShaderProgram, "u_light.position");
-    loc_light_ambient = glGetUniformLocation(h_ShaderProgram, "u_light.ambient_color");
-    loc_light_diffuse = glGetUniformLocation(h_ShaderProgram, "u_light.diffuse_color");
-    loc_light_specular = glGetUniformLocation(h_ShaderProgram, "u_light.specular_color");
-    loc_spot_direction = glGetUniformLocation(h_ShaderProgram, "u_light.spot_direction");
-    loc_spot_exponent = glGetUniformLocation(h_ShaderProgram, "u_light.spot_exponent");
-    loc_spot_cutoff_angle = glGetUniformLocation(h_ShaderProgram, "u_light.spot_cutoff_angle");
-    loc_light_attenuation = glGetUniformLocation(h_ShaderProgram, "u_light.light_attenuation_factors");
 
-    //    material parameters
-    loc_mat_ambient = glGetUniformLocation(h_ShaderProgram, "u_material.ambient_color");
-    loc_mat_diffuse = glGetUniformLocation(h_ShaderProgram, "u_material.diffuse_color");
-    loc_mat_specular = glGetUniformLocation(h_ShaderProgram, "u_material.specular_color");
-    loc_mat_emissive = glGetUniformLocation(h_ShaderProgram, "u_material.emissive_color");
-    loc_mat_shininess = glGetUniformLocation(h_ShaderProgram, "u_material.specular_exponent");
+    loc_uLightOn = glGetUniformLocation(h_ShaderProgram, "uLightOn");
+    loc_uAttenuation = glGetUniformLocation(h_ShaderProgram, "uAttenuation");
+
+    loc_uNumLights = glGetUniformLocation(h_ShaderProgram, "uNumLights");
+    loc_uLightPos = glGetUniformLocation(h_ShaderProgram, "uLightPos");
+    loc_uLightAmbient = glGetUniformLocation(h_ShaderProgram, "uLightAmbient");
+    loc_uLightDiffuse = glGetUniformLocation(h_ShaderProgram, "uLightDiffuse");
+    loc_uLightSpecular = glGetUniformLocation(h_ShaderProgram, "uLightSpecular");
+
+    loc_uLightSpotDirection = glGetUniformLocation(h_ShaderProgram, "uLightSpotDirection");
+    loc_uLightSpotExponent = glGetUniformLocation(h_ShaderProgram, "uLightSpotExponent");
+    loc_uLightSpotCutoffAngle = glGetUniformLocation(h_ShaderProgram, "uLightSpotCutoffAngle");
+
+
+    loc_uMatAmbient = glGetUniformLocation(h_ShaderProgram, "uMaterial.ambient");
+    loc_uMatDiffuse = glGetUniformLocation(h_ShaderProgram, "uMaterial.diffuse");
+    loc_uMatSpecular = glGetUniformLocation(h_ShaderProgram, "uMaterial.specular");
+    loc_uMatShininess = glGetUniformLocation(h_ShaderProgram, "uMaterial.shininess");
 
     // 4) Unbind program until draw time
     glUseProgram(0);
+}
+
+void Shader_Phong_Texture::prepare_shader() {
+    // 1) Specify the two shader stages and terminate array
+    shader_info[0] = { GL_VERTEX_SHADER,   "Shaders/PhongTx.vert" };
+    shader_info[1] = { GL_FRAGMENT_SHADER, "Shaders/PhongTx.frag" };
+    shader_info[2] = { GL_NONE, NULL };
+
+    // 2) Compile, link, and use the program
+    h_ShaderProgram = LoadShaders(shader_info);
+    glUseProgram(h_ShaderProgram);
+
+
+    loc_uModel = glGetUniformLocation(h_ShaderProgram, "uModel");
+    loc_uView = glGetUniformLocation(h_ShaderProgram, "uView");
+    loc_uProjection = glGetUniformLocation(h_ShaderProgram, "uProjection");
+    loc_uNormalMatrix = glGetUniformLocation(h_ShaderProgram, "uNormalMatrix");
+
+    loc_uViewPos = glGetUniformLocation(h_ShaderProgram, "uViewPos");
+
+    loc_uAttenuation = glGetUniformLocation(h_ShaderProgram, "uAttenuation");
+
+    loc_uNumLights = glGetUniformLocation(h_ShaderProgram, "uNumLights");
+    loc_uLightOn = glGetUniformLocation(h_ShaderProgram, "uLightOn");
+    loc_uLightPos = glGetUniformLocation(h_ShaderProgram, "uLightPos");
+    loc_uLightAmbient = glGetUniformLocation(h_ShaderProgram, "uLightAmbient");
+    loc_uLightDiffuse = glGetUniformLocation(h_ShaderProgram, "uLightDiffuse");
+    loc_uLightSpecular = glGetUniformLocation(h_ShaderProgram, "uLightSpecular");
+
+    loc_uLightSpotDirection = glGetUniformLocation(h_ShaderProgram, "uLightSpotDirection");
+    loc_uLightSpotExponent = glGetUniformLocation(h_ShaderProgram, "uLightSpotExponent");
+    loc_uLightSpotCutoffAngle = glGetUniformLocation(h_ShaderProgram, "uLightSpotCutoffAngle");
+
+    loc_uMatAmbient = glGetUniformLocation(h_ShaderProgram, "uMaterial.ambient");
+    loc_uMatDiffuse = glGetUniformLocation(h_ShaderProgram, "uMaterial.diffuse");
+    loc_uMatSpecular = glGetUniformLocation(h_ShaderProgram, "uMaterial.specular");
+    loc_uMatShininess = glGetUniformLocation(h_ShaderProgram, "uMaterial.shininess");
+
+    loc_uTexture = glGetUniformLocation(h_ShaderProgram, "uTexture");
 }

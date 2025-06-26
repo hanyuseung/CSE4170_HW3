@@ -213,6 +213,31 @@ void Dynamic_Object::draw_object(glm::mat4&MM, glm::mat4& ViewMatrix, glm::mat4&
 		//ModelMatrix = glm::rotate(ModelMatrix, rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		break;
 	}
+
+	// light 미리계산
+	extern std::vector<Light_Parameters> lightList;
+	int n = (int)lightList.size();
+	std::vector<int> lonArr(n);
+	std::vector<glm::vec4> posArr(n), ambArr(n), difArr(n), specArr(n);
+	std::vector<float> spotAngleArr(n), spotExpArr(n);
+	std::vector<glm::vec3> spotDirArr(n), attArr(n);
+	for (int j = 0; j < n; j++) {
+		auto& L = lightList[j];
+		lonArr[j] = L.light_on;
+
+		spotAngleArr[j] = L.spot_cutoff_angle;
+		spotDirArr[j] = glm::vec3(L.spot_direction[0], L.spot_direction[1], L.spot_direction[2]);
+		spotExpArr[j] = L.spot_exponent;
+
+		attArr[j] = glm::vec3(L.light_attenuation_factors[0], L.light_attenuation_factors[1], L.light_attenuation_factors[2]);
+
+		glm::vec4 posWC = glm::vec4(L.position[0], L.position[1], L.position[2], L.position[3]);
+		posArr[j] = posWC;
+
+		ambArr[j] = glm::vec4(L.ambient_color[0], L.ambient_color[1], L.ambient_color[2], L.ambient_color[3]);
+		difArr[j] = glm::vec4(L.diffuse_color[0], L.diffuse_color[1], L.diffuse_color[2], L.diffuse_color[3]);
+		specArr[j] = glm::vec4(L.specular_color[0], L.specular_color[1], L.specular_color[2], L.specular_color[3]);
+	}
 	
 
 	for (int i = 0; i < cur_object.instances.size(); i++) {
@@ -246,37 +271,119 @@ void Dynamic_Object::draw_object(glm::mat4&MM, glm::mat4& ViewMatrix, glm::mat4&
 			glUniform3fv(sp->loc_uViewPos, 1, &viewPos[0]);
 
 			// in scene def .cpp
-			extern Light_Parameters worldLight;
-			extern Light_Parameters lightEC;
-			glm::vec4 lightposWC;
-			glm::vec4 posEC;
-			glUniform1i(sp->loc_light_on, worldLight.light_on);
-			if (eyeLight) {
-				posEC = glm::vec4(lightEC.position[0], lightEC.position[1],
-					lightEC.position[2], lightEC.position[3]);;
-				glUniform4fv(sp->loc_light_pos, 1, &posEC[0]);
-			}
-			else {
-				lightposWC = glm::vec4(worldLight.position[0], worldLight.position[1],
-					worldLight.position[2], worldLight.position[3]);
-				glUniform4fv(sp->loc_light_pos, 1, &lightposWC[0]);
-			}
-			glUniform4fv(sp->loc_light_ambient, 1, worldLight.ambient_color);
-			glUniform4fv(sp->loc_light_diffuse, 1, worldLight.diffuse_color);
-			glUniform4fv(sp->loc_light_specular, 1, worldLight.specular_color);
-			glUniform3fv(sp->loc_spot_direction, 1, worldLight.spot_direction);
-			glUniform1f(sp->loc_spot_exponent, worldLight.spot_exponent);
-			glUniform1f(sp->loc_spot_cutoff_angle, worldLight.spot_cutoff_angle);
-			glUniform4fv(sp->loc_light_attenuation, 1, worldLight.light_attenuation_factors);
+
+			glUniform1i(sp->loc_uNumLights, n);
+
+			glUniform1iv(sp->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(sp->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(sp->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(sp->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(sp->loc_uLightSpecular, n, &specArr[0][0]);
+
+			//spot
+			glUniform1fv(sp->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(sp->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(sp->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(sp->loc_uAttenuation, n, &attArr[0][0]);
 
 			const Material& M = cur_object.instances[i].material;
-			glUniform4fv(sp->loc_mat_ambient, 1, &M.ambient[0]);
-			glUniform4fv(sp->loc_mat_diffuse, 1, &M.diffuse[0]);
-			glUniform4fv(sp->loc_mat_specular, 1, &M.specular[0]);
-			glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
-			glUniform1f(sp->loc_mat_shininess, M.exponent);
+			glUniform4fv(sp->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(sp->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(sp->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(sp->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(sp->loc_uMatShininess, M.exponent);
 			break;
 			}
+		case SHADER_GOURAUD: {
+			Shader_Gouraud* sg = static_cast<Shader_Gouraud*>(&shader_list[shader_ID_mapper[shader_kind]].get());
+			glUseProgram(sg->h_ShaderProgram);
+
+			glm::mat4 model = ModelMatrix * cur_object.instances[i].ModelMatrix;
+
+			glUniformMatrix4fv(sg->loc_uModel, 1, GL_FALSE, &model[0][0]);
+			glUniformMatrix4fv(sg->loc_uView, 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(sg->loc_uProjection, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+			glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+			glUniformMatrix3fv(sg->loc_uNormalMatrix, 1, GL_FALSE, &normalMat[0][0]);
+
+			glm::vec3 viewPos = glm::vec3(glm::inverse(ViewMatrix)[3]);
+			glUniform3fv(sg->loc_uViewPos, 1, &viewPos[0]);
+
+			// in scene def .cpp
+
+			glUniform1i(sg->loc_uNumLights, n);
+			glUniform1iv(sg->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(sg->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(sg->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(sg->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(sg->loc_uLightSpecular, n, &specArr[0][0]);
+
+			//spot
+			glUniform1fv(sg->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(sg->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(sg->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(sg->loc_uAttenuation, n, &attArr[0][0]);
+
+
+			const Material& M = cur_object.instances[i].material;
+			glUniform4fv(sg->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(sg->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(sg->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(sg->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(sg->loc_uMatShininess, M.exponent);
+			break;
+		}
+		case SHADER_PHONG_TEXTURE:
+			Shader_Phong_Texture* spt = static_cast<Shader_Phong_Texture*>(&shader_list[shader_ID_mapper[shader_kind]].get());
+			glUseProgram(spt->h_ShaderProgram);
+
+
+			glm::mat4 model = ModelMatrix * cur_object.instances[i].ModelMatrix;
+			glUniformMatrix4fv(spt->loc_uModel, 1, GL_FALSE, &model[0][0]);
+			glUniformMatrix4fv(spt->loc_uView, 1, GL_FALSE, &ViewMatrix[0][0]);
+			glUniformMatrix4fv(spt->loc_uProjection, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+			glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+			glUniformMatrix3fv(spt->loc_uNormalMatrix, 1, GL_FALSE, &normalMat[0][0]);
+
+			glm::vec3 viewPos = glm::vec3(glm::inverse(ViewMatrix)[3]);
+			glUniform3fv(spt->loc_uViewPos, 1, &viewPos[0]);
+
+			// in scene def .cpp
+
+			glUniform1i(spt->loc_uNumLights, n);
+			glUniform1iv(spt->loc_uLightOn, n, &lonArr[0]);
+			glUniform4fv(spt->loc_uLightPos, n, &posArr[0][0]);
+			glUniform4fv(spt->loc_uLightAmbient, n, &ambArr[0][0]);
+			glUniform4fv(spt->loc_uLightDiffuse, n, &difArr[0][0]);
+			glUniform4fv(spt->loc_uLightSpecular, n, &specArr[0][0]);
+
+			//spot
+			glUniform1fv(spt->loc_uLightSpotCutoffAngle, n, &spotAngleArr[0]);
+			glUniform1fv(spt->loc_uLightSpotExponent, n, &spotExpArr[0]);
+			glUniform3fv(spt->loc_uLightSpotDirection, n, &spotDirArr[0][0]);
+
+			//att
+			glUniform3fv(spt->loc_uAttenuation, n, &attArr[0][0]);
+
+
+			const Material& M = cur_object.instances[i].material;
+			glUniform4fv(spt->loc_uMatAmbient, 1, &M.ambient[0]);
+			glUniform4fv(spt->loc_uMatDiffuse, 1, &M.diffuse[0]);
+			glUniform4fv(spt->loc_uMatSpecular, 1, &M.specular[0]);
+			//glUniform4fv(spt->loc_mat_emissive, 1, &M.emission[0]);
+			glUniform1f(spt->loc_uMatShininess, M.exponent);
+
+			GLuint tex = 0;
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glUniform1i(spt->loc_uTexture, 0);
+			break;
 		}
 
 		glBindVertexArray(cur_object.VAO);

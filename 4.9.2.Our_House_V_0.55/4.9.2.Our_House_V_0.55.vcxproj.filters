@@ -21,6 +21,24 @@
     <None Include="Shaders\simple.vert">
       <Filter>리소스 파일</Filter>
     </None>
+    <None Include="Shaders\Gouraud.frag">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Shaders\Gouraud.vert">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Shaders\Phong.vert">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Shaders\Phong.frag">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Shaders\PhongTx.frag">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Shaders\PhongTx.vert">
+      <Filter>리소스 파일</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="4.9.2.Our_House_V_0.55_main.cpp">

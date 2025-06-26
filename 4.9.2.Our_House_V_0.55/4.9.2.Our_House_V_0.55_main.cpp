@@ -59,6 +59,7 @@ void updateCamRotate(float dt);
 void zoomInOut(float z);
 void mouseWheel(int wheel, int direction, int x, int y);
 void init_BenRoute();
+void updateMMLight();
 
 
 
@@ -423,6 +424,20 @@ void updateBenRoute() {
 	scene.DynamicModelMatrixes[0] = BenMM*RTM;
 }
 
+void updateMMLight() {
+	vec3 pos = vec3(BenMM[3]);
+	mat3 R = mat3(BenMM);
+	vec3 dir = normalize(R * vec3(0.0f, 0.0f, 1.0f));
+	lightList[2].position[0] = pos.x;
+	lightList[2].position[1] = pos.y;
+	lightList[2].position[2] = pos.z;
+	lightList[2].spot_direction[0] = dir.x;
+	lightList[2].spot_direction[1] = dir.y;
+	lightList[2].spot_direction[2] = dir.z;
+}
+
+
+
 
 int spiderDeathStart = -1;
 
@@ -658,12 +673,14 @@ void update_main_cam_axis(Camera &camera) {
 	camera.cam_view.vaxis = vec3(R[1]);
 	camera.cam_view.naxis = vec3(R[2]);
 	// 1 is EC light.
+	// requset 4.
 	lightList[1].position[0] = pos.x;
 	lightList[1].position[1] = pos.y;
 	lightList[1].position[2] = pos.z;
-	lightList[1].spot_direction[0] = -R[0][0];
-	lightList[1].spot_direction[1] = -R[0][1];
-	lightList[1].spot_direction[2] = -R[0][2];
+	vec3 forward = -normalize(glm::vec3(R[2]));
+	lightList[1].spot_direction[0] = forward.x;
+	lightList[1].spot_direction[1] = forward.y;
+	lightList[1].spot_direction[2] = forward.z;
 	R = scale(R, vec3(1.0f, 1.0f, 1.0f) * WC_AXIS_LENGTH);
 	scene.CCAxisModelMatrixes[0] = R;
 }
@@ -788,6 +805,7 @@ void display(void) {
 		
 		updateBenRoute();
 		updateSpiderRoute();
+		updateMMLight();
 		scene.draw_world();
 	}
 	glutSwapBuffers();
@@ -796,23 +814,43 @@ void display(void) {
 void keyboardDown(unsigned char key, int x, int y) {
 	static int flag_cull_face = 0, polygon_fill_on = 0, depth_test_on = 0;
 
+	
+
 	switch (key) {
 	case 27: // ESC key
 		glutLeaveMainLoop(); // Incur destuction callback for cleanups.
 		break;
-	case '1':
+	case '0':
 		scene.shader_kind = SHADER_SIMPLE;
+	case '1':
+		scene.shader_kind = SHADER_GOURAUD;
+		for (int i = 0; i < lightList.size(); i++) {
+			lightList[i].light_on = 0;
+		}
+		lightList[3].light_on = 1;
 		break;
 	case '2':
 		scene.shader_kind = SHADER_PHONG;
+		for (int i = 0; i < lightList.size(); i++) {
+			lightList[i].light_on = 0;
+		}
+		lightList[3].light_on = 1;
 		break;
 	case '3':
-		worldLight.light_on = 1- worldLight.light_on;
-		//printf("%d\n", worldLight.light_on);
+		lightList[0].light_on = 1 - lightList[0].light_on;
+		lightList[3].light_on = 0;
 		break;
 	case '4':
-		eyeLight = !eyeLight;
+		lightList[1].light_on = 1 - lightList[1].light_on;
+		lightList[3].light_on = 0;
 		break;
+	case '5':
+		lightList[2].light_on = 1 - lightList[2].light_on;
+		lightList[3].light_on = 0;
+		break;
+	/*case '6':
+		scene.shader_kind = SHADER_PHONG_TEXTURE;
+		break;*/
 
 
 	case 'c':
@@ -1018,7 +1056,7 @@ void keyboardDown(unsigned char key, int x, int y) {
 		}
 		glutPostRedisplay();
 		break;
-	case 'l':
+	case ';':
 		if (!scene.axistoggle) {
 			fprintf(stdout, "Show XYZ Axis.\n");
 			scene.axistoggle = true;
@@ -1028,6 +1066,14 @@ void keyboardDown(unsigned char key, int x, int y) {
 			scene.axistoggle = false;
 		}
 		break;
+	/*case 'N': case 'n':
+		fuckcat = true;
+		break;
+	case 'L': case 'l':
+		fuckcat = false;
+		break;*/
+
+
 	}
 
 
